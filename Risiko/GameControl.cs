@@ -102,9 +102,15 @@ namespace Risiko
         {
             get { return Factor; }
         }
+        //
+        private Color tempSelCountryColor;
         
         //Einstellungen
-        // Landerkennung usw
+        private bool AutoLanderkennung = true;
+        public bool autoLanderkennung
+        {
+            get { return AutoLanderkennung; }
+        }
 
         // Konstruktor
         public GameControl(RisikoMain MainIn)
@@ -125,7 +131,6 @@ namespace Risiko
             else
                 DrawAndLoadMap();
         }
-
         /// <summary>
         /// Lädt Daten der Karte aus DB und lässt diese anschließend von Main zeichnen
         /// </summary>
@@ -143,7 +148,6 @@ namespace Risiko
 
             DrawnMap = true;
         }
-
         /// <summary>
         /// Zeichnet Karte bei veränderung des Faktors erneut, ohne laden
         /// </summary>
@@ -179,8 +183,63 @@ namespace Risiko
         }
 
 
+        //Maus-Aktionen
+        /// <summary>
+        /// MouseBewegung über Map
+        /// </summary>
+        /// <param name="e"></param>
+        public void MouseMoved(MouseEventArgs e)
+        {
+            // hier könnte man DrawnMap (bool (Map bereits gezeichnet)) auch abfragen, jedoch unnötig
+            // da bereits in CheckClickOnPolygon
+            if (autoLanderkennung)
+            {
+                Point clickedPosition = new Point(e.X, e.Y);
+                //int temp = checkClickOnPolygon(clickedPosition);
+                int temp = CheckClickInPolygon(clickedPosition);
+
+                //if(temp != -1)
+                //  tempOldIndex = temp;
+
+                if (temp == -1 & tempIndex != -1)//& tempOldIndex != tempIndex)
+                {
+                    //kein Treffer
+
+                    // auskommentiert da Abfrage zu oft (auch in einem Land) auftritt
+                    // wieso liefert CheckClickOnPolygon direkt in einem Land -1? 
+
+                    Field.countries[tempIndex].colorOfCountry = tempSelCountryColor;
+
+                    Main.DrawCountry(tempIndex);
+                    // da sonst Kreis in der Mitte verschwindet
+                    Main.DrawMiddleCircle(tempIndex);
+                    tempIndex = -1;
+                }
+                else if (temp != -1 & temp != tempIndex)
+                {
+                    //bei Treffer                
+                    if (tempIndex != -1)
+                    {
+                        Field.countries[tempIndex].colorOfCountry = tempSelCountryColor;
+                        Main.DrawCountry(tempIndex);
+                        // da sonst der Kreis in der Mitte verschwindet
+                        Main.DrawMiddleCircle(tempIndex);
+                    }
+
+                    tempSelCountryColor = Field.countries[temp].colorOfCountry;
+                    Field.countries[temp].colorOfCountry = Color.Yellow;
+
+                    tempIndex = temp;
+
+                    Main.DrawCountry(temp);
+                    // da sonst Kreis in der Mitte verschwindet
+                    Main.DrawMiddleCircle(temp);
+                }
+            }
+        }
 
 
+        // Sonstiges
         /// <summary>
         /// Liefert Index des aktuellen Spielers in Players-Array
         /// </summary>
@@ -195,6 +254,9 @@ namespace Risiko
             return -1;
         }
 
+        /// <summary>
+        /// Lädt Länder aus DB
+        /// </summary>
         private void LoadCountriesFromDBSource()
         {
             // Source einbinden
@@ -305,7 +367,6 @@ namespace Risiko
             }
         }
 
-
         /// <summary>
         /// Speichert Anzahl der Länder in Field.numberOfCountries ab
         /// </summary>
@@ -337,7 +398,7 @@ namespace Risiko
         /// <summary>
         /// Setzt den Faktor der Darstellung der Karte
         /// </summary>
-        private void CheckFactor(int newHeight, int newWidth)
+        private void CheckFactor(int newWidth, int newHeight)
         {
             int temp1 = newWidth / Field.width;
             int temp2 = newHeight / Field.height;
@@ -346,7 +407,6 @@ namespace Risiko
             else
                 Factor = temp1;
         }
-
 
         /// <summary>
         /// wandelt tempString in Farbe um
@@ -377,5 +437,122 @@ namespace Risiko
                 return Color.White;
         }
 
+        /// <summary>
+        /// Liefert den Index des Landes zurück
+        /// über dem die Maus ist oder auf das geklickt wurde
+        /// -1 -> kein Land
+        /// ansonsten Index des Landes
+        /// </summary>
+        /// <param name="ClickedPosition"></param>
+        /// <returns></returns>
+        public int CheckClickInPolygon(Point ClickedPosition)
+        {
+            if (DrawnMap)
+            {
+                //Länder, die überprüft werden sollen, werden in Array checkCountries[] geladen
+                Country[] checkCountries = Field.countries;
+
+                for (int i = 0; i < checkCountries.Length; ++i)
+                {
+                    Point[] tempPoints = Field.GiveCountry(i).corners;
+                    Point[] realPoints = new Point[Field.GiveCountry(i).corners.Length];
+
+                    for (int j = 0; j < realPoints.Length; ++j)
+                    {
+                        realPoints[j].X = (tempPoints[j].X * Factor);
+                        realPoints[j].Y = (tempPoints[j].Y * Factor);
+                    }
+
+                    if (PointInPolygon(ClickedPosition, realPoints))
+                        return i;
+                }
+            }
+            return -1;
+        }
+
+        /// <summary>
+        /// Checkt ob Punkt P ind Polygon Polygon
+        /// true = innherhalb des Polygons
+        /// false = außerhalb
+        /// </summary>
+        /// <param name="P"></param>
+        /// <param name="Polygon"></param>
+        /// <returns></returns>
+        public bool PointInPolygon(Point P, Point[] Polygon)
+        {
+            Point P1, P2;
+
+            bool Inside = false;
+
+            if (Polygon.Length < 3)
+                return Inside;
+
+            Point oldPoint = new Point(Polygon[Polygon.Length - 1].X, Polygon[Polygon.Length - 1].Y);
+
+            for (int i = 0; i < Polygon.Length; ++i)
+            {
+                Point newPoint = new Point(Polygon[i].X, Polygon[i].Y);
+
+                if (newPoint.X > oldPoint.X)
+                {
+                    P1 = oldPoint;
+                    P2 = newPoint;
+                }
+                else
+                {
+                    P1 = newPoint;
+                    P2 = oldPoint;
+                }
+
+                if ((newPoint.X < P.X) == (P.X <= oldPoint.X) &&
+                    ((long)P.Y - (long)P1.Y) * (long)(P2.X - P1.X) < ((long)P2.Y - (long)P1.Y) * (long)(P.X - P1.X))
+                    Inside = !Inside;
+                oldPoint = newPoint;
+            }
+            return Inside;
+        }
+
+        /// <summary>
+        /// Liefert Mittel-Punkt eines Polygons zurück
+        /// In Form1, da in Game.Countries.Corners nur die Eckpunkte des "kleinen",
+        /// internen Polygons gespeichert sind
+        /// </summary>
+        /// <param name="realPoints"></param>
+        /// <returns></returns>
+        public Point GetMiddleOfPolygon(Point[] Points)
+        {
+            double Area = 0.0;
+            double MiddleX = 0.0;
+            double MiddleY = 0.0;
+
+            for (int i = 0, j = Points.Length - 1; i < Points.Length; j = i++)
+            {
+                float temp = Points[i].X * Points[j].Y - Points[j].X * Points[i].Y;
+                Area += temp;
+                MiddleX += (Points[i].X + Points[j].X) * temp;
+                MiddleY += (Points[i].Y + Points[j].Y) * temp;
+            }
+
+            Area *= 3;
+            return new Point((int)(MiddleX / Area), (int)(MiddleY / Area));
+        }
+
+        /// <summary>
+        /// Liefert die echten Bildpunkte des Landes zurück, nicht die des "kleinen"
+        /// Koordinatenfeldes, die in Corners gespeichert ist
+        /// </summary>
+        /// <param name="Corners"></param>
+        /// <returns></returns>
+        public Point[] GetRealPointsFromCorners(Point[] Corners)
+        {
+            Point[] realPoints = new Point[Corners.Length];
+
+            for (int i = 0; i < realPoints.Length; ++i)
+            {
+                realPoints[i].X = (Corners[i].X * Factor);
+                realPoints[i].Y = (Corners[i].Y * Factor);
+            }
+            return realPoints;
+        }
     }
 }

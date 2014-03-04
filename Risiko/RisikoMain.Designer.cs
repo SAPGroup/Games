@@ -37,6 +37,7 @@
             this.btnEndMove = new System.Windows.Forms.Button();
             this.lblMessage = new System.Windows.Forms.Label();
             this.btnTest = new System.Windows.Forms.Button();
+            this.einstellungenToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -66,6 +67,8 @@
             // 
             // einstellungenToolStripMenuItem
             // 
+            this.einstellungenToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.einstellungenToolStripMenuItem1});
             this.einstellungenToolStripMenuItem.Name = "einstellungenToolStripMenuItem";
             this.einstellungenToolStripMenuItem.Size = new System.Drawing.Size(90, 20);
             this.einstellungenToolStripMenuItem.Text = "Einstellungen";
@@ -75,10 +78,14 @@
             this.pnlMap.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.pnlMap.BackColor = System.Drawing.SystemColors.Control;
+            this.pnlMap.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.pnlMap.Location = new System.Drawing.Point(12, 27);
             this.pnlMap.Name = "pnlMap";
             this.pnlMap.Size = new System.Drawing.Size(582, 349);
             this.pnlMap.TabIndex = 1;
+            this.pnlMap.MouseMove += new System.Windows.Forms.MouseEventHandler(this.pnlMap_MouseMove);
+            this.pnlMap.Resize += new System.EventHandler(this.ResizeMap);
             // 
             // btnDrawMap
             // 
@@ -122,6 +129,13 @@
             this.btnTest.UseVisualStyleBackColor = true;
             this.btnTest.Click += new System.EventHandler(this.btnTest_Click);
             // 
+            // einstellungenToolStripMenuItem1
+            // 
+            this.einstellungenToolStripMenuItem1.Name = "einstellungenToolStripMenuItem1";
+            this.einstellungenToolStripMenuItem1.Size = new System.Drawing.Size(152, 22);
+            this.einstellungenToolStripMenuItem1.Text = "Einstellungen";
+            this.einstellungenToolStripMenuItem1.Click += new System.EventHandler(this.einstellungenToolStripMenuItem1_Click);
+            // 
             // RisikoMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -155,6 +169,7 @@
         private System.Windows.Forms.Button btnEndMove;
         private System.Windows.Forms.Label lblMessage;
         private System.Windows.Forms.Button btnTest;
+        private System.Windows.Forms.ToolStripMenuItem einstellungenToolStripMenuItem1;
     }
 }
 
