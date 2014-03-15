@@ -2,15 +2,17 @@
 using System.Collections.Generic;
 using System.Data.OleDb;
 using System.Drawing;
+using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Risiko
 {
-    class GameControl
-    {
+    internal class GameControl
+    {    
         // Verbindung zu Main
         private RisikoMain Main;
         // Spielfeld
@@ -44,24 +46,15 @@ namespace Risiko
             get { return ActualPlayer; }
             set { ActualPlayer = value; }
         }
-        
-        
+
 
         /// <summary>
-        /// Reader, zum Lesen aus der Datenbank
+        /// Zum Ein-Auslesen aus 
         /// </summary>
-        OleDbConnection con = new OleDbConnection();
-        OleDbCommand cmd = new OleDbCommand();
-        OleDbDataReader reader;
-
-        /// <summary>
-        /// Pfad der Quelldatei!!
-        /// syntax: con.ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;" +
-        /// "Data Source=C:\\Temp\\Risiko_Weltkarte.accdb";
-        /// 
-        /// TODO: Durch Datei öfnnen verändern (neues Spiel -> Quelldatei auswählen usw)
-        /// </summary>
-        private string DataSourceString = System.Environment.CurrentDirectory + "\\Risiko_Weltkarte2.accdb";
+        private FileStream fs;
+        private StreamReader sr;
+        private StreamWriter sw;
+        private string TxtDataSource = "Worldmap.txt";
         
         
         
@@ -138,7 +131,9 @@ namespace Risiko
         {
             //Main.GiveMap().BackgroundImage = 
 
-            LoadCountriesFromDBSource();
+
+            //LoadCountriesFromDBSource();
+            LoadCountriesFromTxtSource();
 
             int[] WidthHeight = Main.GetMapData();
             CheckFactor(WidthHeight[0], WidthHeight[1]);
@@ -162,7 +157,6 @@ namespace Risiko
             if(tempOldFactor != Factor)
                 Main.DrawMap();
         }
-
 
 
         // Gamestate
@@ -255,145 +249,111 @@ namespace Risiko
         }
 
         /// <summary>
-        /// Lädt Länder aus DB
+        /// Lädt Karte aus Textdatei
         /// </summary>
-        private void LoadCountriesFromDBSource()
+        private void LoadCountriesFromTxtSource()
         {
-            // Source einbinden
-            //DataSourceString = System.Environment.CurrentDirectory + "\\Risiko_Weltkarte1.accdb";
-            con.ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;" +
-                                   "Data Source=" + DataSourceString;
+            // initialisieren der Reader, um aus Txt-Datei zu lesen
+            fs = new FileStream(TxtDataSource, FileMode.Open);
+            sr = new StreamReader(fs);
 
-            // Anzahl der Länder auslesen
-            GetNumberOfCountriesDB();
+            int NumberOfCountries = 0;
+            string zeile;
 
-            cmd.Connection = con;
-            // Aus table Weltkarte (alles)
-            cmd.CommandText = "select * from Worldmap;";
-
-            // Länder erzeugen
-            Field.countries = new Country[Field.numberOfCountries];
-
-            try
+            while (sr.Peek() != -1)
             {
-                //öffnen
-                con.Open();
-                reader = cmd.ExecuteReader();
+                // nächste Zeile in zeile speichern
+                zeile = sr.ReadLine();
+                ++NumberOfCountries;
+            }
+            // erzeugt Länder Array und setzt Länge dessen in Field fest
+            Field.numberOfCountries = NumberOfCountries;
+            Field.countries = new Country[NumberOfCountries];
 
-                // Fortlaufender Zähler, zählt welche Country aktuell erzeugt werden muss
-                int counter = 0;
+            // springt an Anfang der Datei
+            fs.Position = 0;
+            sr.DiscardBufferedData();
+            //sr.BaseStream.Seek(0, SeekOrigin.Begin);
+           
 
-                // temp Werte, die später dem Konstruktor der Country zugeführt werden
-                Color tempColorOfCountry;
-                string tempName;
-                Point[] tempPoints;
-                // Max X und Y Werte, um Höhe und Breite der internen "kleinen" Karte herauszufinden
-                int tempMaxX = 0;
-                int tempMaxY = 0;
 
-                while (reader.Read())
+
+            // temp-Werte der Länder
+            string tempName;
+            Color tempColor;
+            Point[] tempPoints;
+            // Um die Maximalen Werte der Karte auszulesen
+            int tempMaxX = 0, tempMaxY = 0;
+            // Zähler für die erzeugten Länder
+            int Counter = 0;
+
+            while (sr.Peek() != -1)
+            {
+                // nächste Zeile in zeile speichern
+                zeile = sr.ReadLine();
+                // Zeile zerlegen
+                string [] Parts = zeile.Split('.');
+
+                // Name und Farbe des Landes auslesen
+                tempColor = GetColorFromString(Parts[0]);
+                tempName = Parts[1];
+
+                // Eckpunkte des Landes auslesen, -> String wieder zerlegen
+                string[] Corners = Parts[4].Split(';');
+                // Länge von tempPoints festlegen
+                tempPoints = new Point[Corners.Length/2];
+                for (int i = 0;i < Corners.Length/2; i++)
                 {
-                    // Name
-                    tempName = Convert.ToString(reader["Name"]);
-
-                    // Color (Farbe)
-                    tempColorOfCountry = GetColorFromString(Convert.ToString(reader["Color"]));
-
-                    // Corners (Ecken)
-                    string tempCorners = Convert.ToString(reader["Corners"]);
-                    string[] Corners = tempCorners.Split(';');
-                    tempPoints = new Point[Corners.Length / 2];
-                    for (int i = 0; i < Corners.Length / 2; ++i)
-                    {
-                        tempPoints[i].X = Convert.ToInt32(Corners[i * 2]);
-                        tempPoints[i].Y = Convert.ToInt32(Corners[i * 2 + 1]);
-                        if (Convert.ToInt32(Corners[i * 2]) > tempMaxX)
-                            tempMaxX = Convert.ToInt32(Corners[i * 2]);
-                        if (Convert.ToInt32(Corners[i * 2 + 1]) > tempMaxY)
-                            tempMaxY = Convert.ToInt32(Corners[i * 2 + 1]);
-                    }
-
-                    // Konstruktor der Country
-                    Field.countries[counter] = new Country(tempName, tempPoints, tempColorOfCountry);
-                    counter++;
+                    tempPoints[i].X = Convert.ToInt32(Corners[i * 2]);
+                    tempPoints[i].Y = Convert.ToInt32(Corners[i * 2 + 1]);
+                    if (Convert.ToInt32(Corners[i * 2]) > tempMaxX)
+                        tempMaxX = Convert.ToInt32(Corners[i * 2]);
+                    if (Convert.ToInt32(Corners[i * 2 + 1]) > tempMaxY)
+                        tempMaxY = Convert.ToInt32(Corners[i * 2 + 1]);
                 }
-                Field.width = tempMaxX;
-                Field.height = tempMaxY;
-                reader.Close();
-                con.Close();
+                Field.countries[Counter] = new Country(tempName, tempPoints, tempColor);
+                Counter++;
             }
-            catch (Exception ex)
+            Field.height = tempMaxY;
+            Field.width = tempMaxX;
+
+            // springt an Anfang der Datei
+            fs.Position = 0;
+            sr.DiscardBufferedData();
+            //sr.BaseStream.Seek(0, SeekOrigin.Begin);
+
+
+
+
+
+            // Zähler kann von oben verwendet werden, wird auf 0 zurück gesetzt
+            Counter = 0;
+            while (sr.Peek() != -1)
             {
-                // temp String, falls Fehlermeldung
-                string temp = ex.Message;
-            }
+                // nächste Zeile in zeile speichern
+                zeile = sr.ReadLine();
+                // Zeile zerlegen
+                string[] Parts = zeile.Split('.');
 
-
-            // Laden der NachbarLänder, Countries muss schon festlegen, da daraus Namen
-            // der Länder gelesen werden
-            cmd.CommandText = "select * from Worldmap;";
-            try
-            {
-                //öffnen
-                con.Open();
-                reader = cmd.ExecuteReader();
-
-                // Fortlaufender Zähler, zählt welche Country aktuell erzeugt werden muss
-                int counter = 0;
-
-                while (reader.Read())
+                string[] Neighbours = Parts[5].Split(';');
+                string[] tempNeighbouringCountries = new string[Neighbours.Length];
+                for (int i = 0; i < Neighbours.Length; ++i)
                 {
-
-                    string tempNeighbours = Convert.ToString(reader["Neighbours"]);
-                    string[] Neighbours = tempNeighbours.Split(';');
-                    string[] tempNeighbouringCountries = new string[Neighbours.Length];
-                    for (int i = 0; i < Neighbours.Length; ++i)
-                    {
-                        int tempCountryID = Convert.ToInt32(Neighbours[i]);
-                        tempNeighbouringCountries[i] = Field.countries[tempCountryID - 1].name;
-                    }
-
-                    Field.countries[counter].neighbouringCountries = tempNeighbouringCountries;
-                    counter++;
+                    int tempCountryID = Convert.ToInt32(Neighbours[i]);
+                    tempNeighbouringCountries[i] = Field.countries[tempCountryID - 1].name;
                 }
-                reader.Close();
-                con.Close();
+
+                Field.countries[Counter].neighbouringCountries = tempNeighbouringCountries;
+                Counter++;
             }
-            catch (Exception ex)
-            {
-                // temp String, falls Fehlermeldung
-                string temp = ex.Message;
-                MessageBox.Show(temp);
-            }
+
+
+
+            // Ende,  streamreader schließen, kappt Verbindung zur Txt-Datei
+            sr.Close();
         }
 
-        /// <summary>
-        /// Speichert Anzahl der Länder in Field.numberOfCountries ab
-        /// </summary>
-        private void GetNumberOfCountriesDB()
-        {
-            cmd.Connection = con;
-            cmd.CommandText = "select * from Worldmap;";
-            try
-            {
-                //öffnen
-                con.Open();
-                reader = cmd.ExecuteReader();
-                // Anzahl der Länder
-                int tempNumberOfCountries = 0;
-                while (reader.Read())
-                {
-                    ++tempNumberOfCountries;
-                }
-                Field.numberOfCountries = tempNumberOfCountries;
-                reader.Close();
-                con.Close();
-            }
-            catch (Exception ex)
-            {
-                string temp = ex.Message;
-            }
-        }
+        
 
         /// <summary>
         /// Setzt den Faktor der Darstellung der Karte
@@ -554,5 +514,163 @@ namespace Risiko
             }
             return realPoints;
         }
+
+
+
+
+        // OLD
+        ///// <summary>
+        ///// Reader, zum Lesen aus der Datenbank
+        ///// </summary>
+        //private OleDbConnection con = new OleDbConnection();
+        //private OleDbCommand cmd = new OleDbCommand();
+        //private OleDbDataReader reader;
+        ///// <summary>
+        ///// Pfad der Quelldatei!!
+        ///// syntax: con.ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;" +
+        ///// "Data Source=C:\\Temp\\Risiko_Weltkarte.accdb";
+        ///// 
+        ///// TODO: Durch Datei öfnnen verändern (neues Spiel -> Quelldatei auswählen usw)
+        ///// </summary>
+        //private string DataSourceString = System.Environment.CurrentDirectory + "\\Risiko_Weltkarte2.accdb";
+        ///// <summary>
+        ///// Lädt Länder aus DB
+        ///// </summary>
+        //private void LoadCountriesFromDBSource()
+        //{
+        //    // Source einbinden
+        //    //DataSourceString = System.Environment.CurrentDirectory + "\\Risiko_Weltkarte1.accdb";
+        //    con.ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;" +
+        //                           "Data Source=" + DataSourceString;
+
+        //    // Anzahl der Länder auslesen
+        //    GetNumberOfCountriesDB();
+
+        //    cmd.Connection = con;
+        //    // Aus table Weltkarte (alles)
+        //    cmd.CommandText = "select * from Worldmap;";
+
+        //    // Länder erzeugen
+        //    Field.countries = new Country[Field.numberOfCountries];
+
+        //    try
+        //    {
+        //        //öffnen
+        //        con.Open();
+        //        reader = cmd.ExecuteReader();
+
+        //        // Fortlaufender Zähler, zählt welche Country aktuell erzeugt werden muss
+        //        int counter = 0;
+
+        //        // temp Werte, die später dem Konstruktor der Country zugeführt werden
+        //        Color tempColorOfCountry;
+        //        string tempName;
+        //        Point[] tempPoints;
+        //        // Max X und Y Werte, um Höhe und Breite der internen "kleinen" Karte herauszufinden
+        //        int tempMaxX = 0;
+        //        int tempMaxY = 0;
+
+        //        while (reader.Read())
+        //        {
+        //            // Name
+        //            tempName = Convert.ToString(reader["Name"]);
+
+        //            // Color (Farbe)
+        //            tempColorOfCountry = GetColorFromString(Convert.ToString(reader["Color"]));
+
+        //            // Corners (Ecken)
+        //            string tempCorners = Convert.ToString(reader["Corners"]);
+        //            string[] Corners = tempCorners.Split(';');
+        //            tempPoints = new Point[Corners.Length / 2];
+        //            for (int i = 0; i < Corners.Length / 2; ++i)
+        //            {
+        //                tempPoints[i].X = Convert.ToInt32(Corners[i * 2]);
+        //                tempPoints[i].Y = Convert.ToInt32(Corners[i * 2 + 1]);
+        //                if (Convert.ToInt32(Corners[i * 2]) > tempMaxX)
+        //                    tempMaxX = Convert.ToInt32(Corners[i * 2]);
+        //                if (Convert.ToInt32(Corners[i * 2 + 1]) > tempMaxY)
+        //                    tempMaxY = Convert.ToInt32(Corners[i * 2 + 1]);
+        //            }
+
+        //            // Konstruktor der Country
+        //            Field.countries[counter] = new Country(tempName, tempPoints, tempColorOfCountry);
+        //            counter++;
+        //        }
+        //        Field.width = tempMaxX;
+        //        Field.height = tempMaxY;
+        //        reader.Close();
+        //        con.Close();
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        // temp String, falls Fehlermeldung
+        //        string temp = ex.Message;
+        //    }
+
+
+        //    // Laden der NachbarLänder, Countries muss schon festlegen, da daraus Namen
+        //    // der Länder gelesen werden
+        //    cmd.CommandText = "select * from Worldmap;";
+        //    try
+        //    {
+        //        //öffnen
+        //        con.Open();
+        //        reader = cmd.ExecuteReader();
+
+        //        // Fortlaufender Zähler, zählt welche Country aktuell erzeugt werden muss
+        //        int counter = 0;
+
+        //        while (reader.Read())
+        //        {
+
+        //            string tempNeighbours = Convert.ToString(reader["Neighbours"]);
+        //            string[] Neighbours = tempNeighbours.Split(';');
+        //            string[] tempNeighbouringCountries = new string[Neighbours.Length];
+        //            for (int i = 0; i < Neighbours.Length; ++i)
+        //            {
+        //                int tempCountryID = Convert.ToInt32(Neighbours[i]);
+        //                tempNeighbouringCountries[i] = Field.countries[tempCountryID - 1].name;
+        //            }
+
+        //            Field.countries[counter].neighbouringCountries = tempNeighbouringCountries;
+        //            counter++;
+        //        }
+        //        reader.Close();
+        //        con.Close();
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        // temp String, falls Fehlermeldung
+        //        string temp = ex.Message;
+        //        MessageBox.Show(temp);
+        //    }
+        //}
+        ///// <summary>
+        ///// Speichert Anzahl der Länder in Field.numberOfCountries ab
+        ///// </summary>
+        //private void GetNumberOfCountriesDB()
+        //{
+        //    cmd.Connection = con;
+        //    cmd.CommandText = "select * from Worldmap;";
+        //    try
+        //    {
+        //        //öffnen
+        //        con.Open();
+        //        reader = cmd.ExecuteReader();
+        //        // Anzahl der Länder
+        //        int tempNumberOfCountries = 0;
+        //        while (reader.Read())
+        //        {
+        //            ++tempNumberOfCountries;
+        //        }
+        //        Field.numberOfCountries = tempNumberOfCountries;
+        //        reader.Close();
+        //        con.Close();
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        string temp = ex.Message;
+        //    }
+        //}
     }
 }

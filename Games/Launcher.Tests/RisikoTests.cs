@@ -3,7 +3,7 @@ using System.Drawing;
 using System.Windows;
 using Games;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Risiko;
+using Risiko; 
 
 namespace Launcher.Tests
 {
@@ -13,7 +13,13 @@ namespace Launcher.Tests
         [TestMethod]
         public void PointInPolygon_PositivePoint_True()
         {
-            //var a = new Games.LauncherControl(new Games.Launcher());
+            Games.LauncherControl b;
+            var a = new Risiko.Player("Peter", false, Color.Black);
+            
+            //Risiko.GameControl target;
+            //PrivateObject obj = new PrivateObject(target);
+            //var retVal = obj.Invoke("PrivateMethod");
+            //Assert.AreEqual(retVal);
         }
     }
 }

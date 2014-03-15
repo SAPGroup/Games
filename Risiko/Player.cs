@@ -2,12 +2,13 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Risiko
 {
-    class Player
+    internal class Player
     {
         /// <summary>
         /// Array aller besetzten Länder

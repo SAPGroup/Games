@@ -6,8 +6,9 @@ using System.Threading.Tasks;
 
 namespace Games
 {
-    public class LauncherControl
+    internal class LauncherControl
     {
+
         // Um auf aufrufende Klasse zugreifen zu können
         private Launcher Caller;
 

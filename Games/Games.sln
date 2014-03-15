@@ -5,7 +5,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Games", "Games.csproj", "{9
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Risiko", "..\Risiko\Risiko.csproj", "{D0EDC055-E4D8-4EC7-9627-930274B90DFB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "zGames.Tests", "Launcher.Tests\zGames.Tests.csproj", "{CBF79A87-7675-4419-83DC-F5EA48C846E5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "zGames", "Launcher.Tests\zGames.csproj", "{CBF79A87-7675-4419-83DC-F5EA48C846E5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
