@@ -36,7 +36,21 @@ namespace Risiko
             // für Ländergrenzen
             stift = new Pen(Color.Black);
             // BackColor der Map
-            pnlMap.BackColor = Color.Beige;
+            pnlMap.BackColor = Color.White;
+
+
+            // Design
+            btnDrawMap.FlatStyle = FlatStyle.Flat;
+            btnDrawMap.FlatAppearance.BorderColor = Color.White;
+            btnDrawMap.FlatAppearance.BorderSize = 1;
+
+            btnEndMove.FlatStyle = FlatStyle.Flat;
+            btnEndMove.FlatAppearance.BorderColor = Color.White;
+            btnEndMove.FlatAppearance.BorderSize = 1;
+
+            btnTest.FlatStyle = FlatStyle.Flat;
+            btnTest.FlatAppearance.BorderColor = Color.White;
+            btnTest.FlatAppearance.BorderSize = 1;
         }
 
         private void btnTest_Click(object sender, EventArgs e)
@@ -88,6 +102,7 @@ namespace Risiko
         {
             z_asBitmap = new Bitmap(pnlMap.Width, pnlMap.Height);
             z = Graphics.FromImage(z_asBitmap);
+            
 
             for (int i = 0; i < Control.field.numberOfCountries; ++i)
             {
@@ -104,7 +119,7 @@ namespace Risiko
                 z.FillPolygon(tempObjectbrush, realPoints);
                 z.DrawPolygon(stift, realPoints);
             }
-            //pnlMap bekommt Bilddatei zugewiesen
+
             pnlMap.BackgroundImage = z_asBitmap;
         }
 
@@ -116,6 +131,7 @@ namespace Risiko
         /// <param name="IndexIn">Index des Landes</param>
         public void DrawCountry(int IndexIn)
         {
+            // Zeichnet Land einfarbig, in Farbe des besitzenden Spielers
             Graphics temp;
             temp = pnlMap.CreateGraphics();
 
@@ -157,6 +173,102 @@ namespace Risiko
             // -5 magic, TODO: Verbessern, passt nicht immer (nicht immer in der Mitte -> zweistellig usw.)
             temp.DrawString(
                 Convert.ToString(Control.field.countries[Country].unitsStationed), f, tempObjectbrush, Middle.X - 5, Middle.Y - 5);
+        }
+
+        /// <summary>
+        /// Zeichnet nur Anzahl der Einheiten, in Weiß in der Mitte des Landes
+        /// </summary>
+        /// <param name="Country"></param>
+        public void DrawMiddleUnits(int Country)
+        {
+            Point[] realPoints = Control.GetRealPointsFromCorners(Control.field.countries[Country].corners);
+            Point Middle = Control.GetMiddleOfPolygon(realPoints);
+
+            //graphics initialisieren
+            Graphics temp = pnlMap.CreateGraphics();
+
+            //zum schreiben
+            Font f = new Font("Arial", 10);
+            SolidBrush tempObjectbrush = new SolidBrush(Color.White);
+
+            // -5 magic, TODO: Verbessern, passt nicht immer (nicht immer in der Mitte -> zweistellig usw.)
+            temp.DrawString(
+                Convert.ToString(Control.field.countries[Country].unitsStationed), f, tempObjectbrush, Middle.X - 5, Middle.Y - 5);
+        }
+
+        /// <summary>
+        /// Zeichnet Land mit Farbigem äußeren, gründ atm
+        /// </summary>
+        /// <param name="IndexIn"></param>
+        public void DrawCountryWithInner(int IndexIn)
+        {
+            //Faktor
+            double Factor = 0.9;
+
+            // Zeichnet Land einfarbig, in Farbe des besitzenden Spielers
+            Graphics temp;
+            temp = pnlMap.CreateGraphics();
+
+            //Äußere Eckpunkte
+            Point[] tempPoints = Control.field.GiveCountry(IndexIn).corners;
+            Point[] realPoints = new Point[Control.field.GiveCountry(IndexIn).corners.Length];
+
+            for (int i = 0; i < realPoints.Length; ++i)
+            {
+                realPoints[i].X = (tempPoints[i].X * Control.factor);
+                realPoints[i].Y = (tempPoints[i].Y * Control.factor);
+            }
+
+            // Innere Eckpunkte
+            Point Middle = Control.GetMiddleOfPolygon(realPoints);
+            Point[] InnerPoly = new Point[realPoints.Length];
+            for (int i = 0;i < realPoints.Length;++i)
+            {
+                int innerVX = realPoints[i].X - Middle.X;
+                int innerVY = realPoints[i].Y - Middle.Y;
+
+                InnerPoly[i].X = Middle.X + (int)(innerVX*Factor);
+                InnerPoly[i].Y = Middle.Y + (int)(innerVY * Factor);
+            }
+            // Außen zeichnen
+            SolidBrush tempObjectbrush = new SolidBrush(Color.Green);
+            temp.FillPolygon(tempObjectbrush, realPoints);
+            temp.DrawPolygon(stift, realPoints);
+            // Innen Zeichnen
+            tempObjectbrush = new SolidBrush(Control.field.GiveCountry(IndexIn).colorOfCountry);
+            temp.FillPolygon(tempObjectbrush, InnerPoly);
+            
+        }
+
+        public void DrawCorners(int CountryIn)
+        {
+            Point[] realPoints = Control.GetRealPointsFromCorners(Control.field.countries[CountryIn].corners);
+            Point[] Corners = Control.field.countries[CountryIn].corners;
+
+            //graphics initialisieren
+            Graphics temp = pnlMap.CreateGraphics();
+
+            //zum schreiben
+            Font f = new Font("Arial", 10);
+            SolidBrush tempObjectbrush = new SolidBrush(Color.Black);
+
+            for (int i = 0;i < Corners.Length;++i)
+            {
+                String Corner = Convert.ToString(Corners[i].X) + ";" + Convert.ToString(Corners[i].Y);
+                // -5 magic, TODO: Verbessern, passt nicht immer (nicht immer in der Mitte -> zweistellig usw.)
+                temp.DrawString(Corner, f, tempObjectbrush, realPoints[i].X, realPoints[i].Y);
+            }
+        }
+
+
+        private void pnlMap_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void trackBar_Scroll(object sender, EventArgs e)
+        {
+
         }
     }
 }

@@ -43,7 +43,7 @@ namespace Risiko
         /// Speichert den Kontinent, zu dem das Land gehört
         /// 0-x , Kontinente, -1 unbelegt (noch nicht initialisiert)
         /// </summary>
-        private int Continent;
+        private int Continent = -1;
 
 
         //

@@ -44,6 +44,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Continent.cs" />
     <Compile Include="Country.cs" />
     <Compile Include="GameControl.cs" />
     <Compile Include="GameField.cs" />

@@ -54,8 +54,16 @@ namespace Risiko
         private FileStream fs;
         private StreamReader sr;
         private StreamWriter sw;
-        private string TxtDataSource = "Worldmap.txt";
-        
+
+        /// <summary>
+        /// Quelle aus der die Karte gelesen werden soll
+        /// </summary>
+        private string TxtDataSource = "WorldmapWithTabel.txt";//"WorldmapWT.txt";
+        public string txtDataSource
+        {
+            get { return TxtDataSource; }
+            set { TxtDataSource = value; }
+        }
         
         
         //ZufallszahlenGenerator
@@ -110,6 +118,7 @@ namespace Risiko
         {
             Main = MainIn;
         }
+        public GameControl(){}
 
 
         //Karte zeichnen
@@ -129,11 +138,9 @@ namespace Risiko
         /// </summary>
         private void DrawAndLoadMap()
         {
-            //Main.GiveMap().BackgroundImage = 
-
-
-            //LoadCountriesFromDBSource();
+            //Länder aus Quelldatei lesen
             LoadCountriesFromTxtSource();
+            // 
 
             int[] WidthHeight = Main.GetMapData();
             CheckFactor(WidthHeight[0], WidthHeight[1]);
@@ -205,8 +212,11 @@ namespace Risiko
                     Field.countries[tempIndex].colorOfCountry = tempSelCountryColor;
 
                     Main.DrawCountry(tempIndex);
+                    Main.DrawCorners(tempIndex);
+                    //Main.DrawCountry(tempIndex);
                     // da sonst Kreis in der Mitte verschwindet
-                    Main.DrawMiddleCircle(tempIndex);
+                    //Main.DrawMiddleCircle(tempIndex);
+                    Main.DrawMiddleUnits(tempIndex);
                     tempIndex = -1;
                 }
                 else if (temp != -1 & temp != tempIndex)
@@ -216,8 +226,10 @@ namespace Risiko
                     {
                         Field.countries[tempIndex].colorOfCountry = tempSelCountryColor;
                         Main.DrawCountry(tempIndex);
+                        //Main.DrawCountry(tempIndex);
                         // da sonst der Kreis in der Mitte verschwindet
-                        Main.DrawMiddleCircle(tempIndex);
+                        //Main.DrawMiddleCircle(tempIndex);
+                        Main.DrawMiddleUnits(tempIndex);
                     }
 
                     tempSelCountryColor = Field.countries[temp].colorOfCountry;
@@ -226,8 +238,11 @@ namespace Risiko
                     tempIndex = temp;
 
                     Main.DrawCountry(temp);
+                    Main.DrawCorners(temp);
+                    //Main.DrawCountry(tempIndex);
                     // da sonst Kreis in der Mitte verschwindet
-                    Main.DrawMiddleCircle(temp);
+                    //Main.DrawMiddleCircle(temp);
+                    Main.DrawMiddleUnits(temp);
                 }
             }
         }
@@ -248,35 +263,24 @@ namespace Risiko
             return -1;
         }
 
-        /// <summary>
-        /// Lädt Karte aus Textdatei
-        /// </summary>
+
         private void LoadCountriesFromTxtSource()
         {
-            // initialisieren der Reader, um aus Txt-Datei zu lesen
-            fs = new FileStream(TxtDataSource, FileMode.Open);
-            sr = new StreamReader(fs);
+            // Txt Datei auslesen, kann in ganzer Methode dann weiter verwendet werden
+            string[] TxtSource = LoadStringsFromTxtSource();
 
-            int NumberOfCountries = 0;
-            string zeile;
+            //StartIndex der Länder und Länge
+            int StartIndex = 0, Length = 0;
+            SearchForSpecialPartFromTxtSource(ref StartIndex, ref Length, TxtSource, "Continents");
 
-            while (sr.Peek() != -1)
-            {
-                // nächste Zeile in zeile speichern
-                zeile = sr.ReadLine();
-                ++NumberOfCountries;
-            }
             // erzeugt Länder Array und setzt Länge dessen in Field fest
-            Field.numberOfCountries = NumberOfCountries;
-            Field.countries = new Country[NumberOfCountries];
-
-            // springt an Anfang der Datei
-            fs.Position = 0;
-            sr.DiscardBufferedData();
-            //sr.BaseStream.Seek(0, SeekOrigin.Begin);
-           
+            Field.numberOfCountries = Length;
+            Field.countries = new Country[Length];
 
 
+
+            // !!!             Länder auslesen          !!!
+            
 
             // temp-Werte der Länder
             string tempName;
@@ -284,15 +288,17 @@ namespace Risiko
             Point[] tempPoints;
             // Um die Maximalen Werte der Karte auszulesen
             int tempMaxX = 0, tempMaxY = 0;
-            // Zähler für die erzeugten Länder
-            int Counter = 0;
 
-            while (sr.Peek() != -1)
+            for(int j = 0; j < Length; ++j)
             {
-                // nächste Zeile in zeile speichern
-                zeile = sr.ReadLine();
+                string zeile = TxtSource[StartIndex+j];
+                //Kommentarzeilen überspringen
+                if (zeile.StartsWith("//"))
+                    continue;
+                //Tabs und Leerzeichen entfernen
+                zeile = zeile.Trim('\t', ' ');
                 // Zeile zerlegen
-                string [] Parts = zeile.Split('.');
+                string[] Parts = zeile.Split('.');
 
                 // Name und Farbe des Landes auslesen
                 tempColor = GetColorFromString(Parts[0]);
@@ -301,8 +307,8 @@ namespace Risiko
                 // Eckpunkte des Landes auslesen, -> String wieder zerlegen
                 string[] Corners = Parts[4].Split(';');
                 // Länge von tempPoints festlegen
-                tempPoints = new Point[Corners.Length/2];
-                for (int i = 0;i < Corners.Length/2; i++)
+                tempPoints = new Point[Corners.Length / 2];
+                for (int i = 0; i < Corners.Length / 2; i++)
                 {
                     tempPoints[i].X = Convert.ToInt32(Corners[i * 2]);
                     tempPoints[i].Y = Convert.ToInt32(Corners[i * 2 + 1]);
@@ -311,27 +317,20 @@ namespace Risiko
                     if (Convert.ToInt32(Corners[i * 2 + 1]) > tempMaxY)
                         tempMaxY = Convert.ToInt32(Corners[i * 2 + 1]);
                 }
-                Field.countries[Counter] = new Country(tempName, tempPoints, tempColor);
-                Counter++;
+                Field.countries[j] = new Country(tempName, tempPoints, tempColor);
             }
             Field.height = tempMaxY;
             Field.width = tempMaxX;
 
-            // springt an Anfang der Datei
-            fs.Position = 0;
-            sr.DiscardBufferedData();
-            //sr.BaseStream.Seek(0, SeekOrigin.Begin);
 
-
-
-
-
-            // Zähler kann von oben verwendet werden, wird auf 0 zurück gesetzt
-            Counter = 0;
-            while (sr.Peek() != -1)
+            for (int j = 0; j < Length; ++j)
             {
-                // nächste Zeile in zeile speichern
-                zeile = sr.ReadLine();
+                string zeile = TxtSource[StartIndex + j];
+                //Kommentarzeilen überspringen
+                if (zeile.StartsWith("//"))
+                    continue;
+                // Leerzeichen und Tabs entfernen
+                zeile = zeile.Trim('\t', ' ');
                 // Zeile zerlegen
                 string[] Parts = zeile.Split('.');
 
@@ -343,16 +342,114 @@ namespace Risiko
                     tempNeighbouringCountries[i] = Field.countries[tempCountryID - 1].name;
                 }
 
-                Field.countries[Counter].neighbouringCountries = tempNeighbouringCountries;
-                Counter++;
+                Field.countries[j].neighbouringCountries = tempNeighbouringCountries;
             }
 
-
-
-            // Ende,  streamreader schließen, kappt Verbindung zur Txt-Datei
-            sr.Close();
         }
 
+        
+        /// <summary>
+        /// Zählt Einträge zwischen Start und End, ab StartIndex
+        /// </summary>
+        /// <param name="Txt"></param>
+        /// <returns></returns>
+        private int LoadNumberOfEntriesFromStrings(string[] Txt, int StartingIndex)
+        {
+            int EntryCounter = 0;
+            bool StartetCounting = false;
+            for (int i = StartingIndex;i < Txt.Length;++i)
+            {
+                if (Txt[i][0] == '/' & Txt[i][0] == '/')
+                    continue;
+                else if (Txt[i].StartsWith("Start"))
+                    StartetCounting = true;
+                else if (Txt[i].StartsWith("End"))
+                    StartetCounting = false;
+                if (StartetCounting)
+                    EntryCounter++;
+            }
+
+            return EntryCounter;
+        }
+
+
+        /// <summary>
+        /// Durchsucht String-Array nach "Start "+ToSearch und "End "+ToSearch
+        /// und gibt Index von Start+1 und Differenz von Start und Ende aus
+        /// indirekt da mehr als ein Rückgabewert
+        /// 
+        /// !!! Kommentare werden auch berücktsichtigt
+        /// </summary>
+        /// <param name="StartIndex"></param>
+        /// <param name="Length"></param>
+        /// <param name="ToSearchThrough"></param>
+        /// <param name="ToSearch"></param>
+        private void SearchForSpecialPartFromTxtSource(ref int StartIndex, ref int Length, string[] ToSearchThrough, string ToSearch)
+        {
+            // Nicht gefunden, wenn diese Werte zurückgegeben werden
+            StartIndex = -1;
+            Length = -1;
+            // Eigentliche Methode
+            bool Started = false;
+            for (int i = 0;ToSearchThrough.Length > i;++i)
+            {
+                if (!Started & ToSearchThrough[i].StartsWith("Start " + ToSearch))
+                {
+                    Started = true;
+                    StartIndex = i + 1;
+                }
+                else if (Started & ToSearchThrough[i].StartsWith("End " + ToSearch))
+                {
+                    Length = i - StartIndex;
+                    return;
+                }
+            }
+        }
+
+
+
+        /// <summary>
+        /// Lädt den gesamten Inhalt der Txt-Source-Datei in String-Array
+        /// </summary>
+        /// <returns></returns>
+        private string[] LoadStringsFromTxtSource()
+        {
+            string[] OutBuf = new string[0];
+
+            // initialisieren der Reader, um aus Txt-Datei zu lesen
+            fs = new FileStream(TxtDataSource, FileMode.Open);
+            sr = new StreamReader(fs);
+            string zeile;
+
+            while (sr.Peek() != -1)
+            {
+                // nächste Zeile in zeile speichern
+                zeile = sr.ReadLine();
+                OutBuf = AddStringToStringArray(zeile, OutBuf);
+            }
+            sr.DiscardBufferedData();
+            sr.Close();
+
+            return OutBuf;
+        }
+        
+        /// <summary>
+        /// Fügt String, an Stringarray an
+        /// und gibt erweiterten Array zurück
+        /// </summary>
+        /// <param name="ToAdd"></param>
+        /// <param name="StringArray"></param>
+        /// <returns></returns>
+        private string[] AddStringToStringArray(string ToAdd, string[] StringArray)
+        {
+            string[] OutBuf = new string[StringArray.Length+1];
+            for (int i = 0;i < StringArray.Length;++i)
+            {
+                OutBuf[i] = StringArray[i];
+            }
+            OutBuf[StringArray.Length] = ToAdd;
+            return OutBuf;
+        }
         
 
         /// <summary>
@@ -672,5 +769,116 @@ namespace Risiko
         //        string temp = ex.Message;
         //    }
         //}
+        ///// <summary>
+        ///// Lädt Karte aus Textdatei
+        ///// </summary>
+        //private void LoadCountriesFromTxtSource()
+        //{
+        //    // initialisieren der Reader, um aus Txt-Datei zu lesen
+        //    fs = new FileStream(TxtDataSource, FileMode.Open);
+        //    sr = new StreamReader(fs);
+
+        //    int NumberOfCountries = 0;
+        //    string zeile;
+
+        //    while (sr.Peek() != -1)
+        //    {
+        //        // nächste Zeile in zeile speichern
+        //        zeile = sr.ReadLine();
+        //        ++NumberOfCountries;
+        //    }
+        //    // erzeugt Länder Array und setzt Länge dessen in Field fest
+        //    Field.numberOfCountries = NumberOfCountries;
+        //    Field.countries = new Country[NumberOfCountries];
+
+        //    // springt an Anfang der Datei
+        //    fs.Position = 0;
+        //    sr.DiscardBufferedData();
+
+
+
+        //    // temp-Werte der Länder
+        //    string tempName;
+        //    Color tempColor;
+        //    Point[] tempPoints;
+        //    // Um die Maximalen Werte der Karte auszulesen
+        //    int tempMaxX = 0, tempMaxY = 0;
+        //    // Zähler für die erzeugten Länder
+        //    int Counter = 0;
+
+        //    while (sr.Peek() != -1)
+        //    {
+        //        // nächste Zeile in zeile speichern
+        //        zeile = sr.ReadLine();
+        //        //Kommentarzeilen überspringen
+        //        if (zeile[0] == '/' & zeile[1] == '/')
+        //            continue;
+        //        //Tabs und Leerzeichen entfernen
+        //        zeile = zeile.Trim('\t', ' ');
+        //        // Zeile zerlegen
+        //        string[] Parts = zeile.Split('.');
+
+        //        // Name und Farbe des Landes auslesen
+        //        tempColor = GetColorFromString(Parts[0]);
+        //        tempName = Parts[1];
+
+        //        // Eckpunkte des Landes auslesen, -> String wieder zerlegen
+        //        string[] Corners = Parts[4].Split(';');
+        //        // Länge von tempPoints festlegen
+        //        tempPoints = new Point[Corners.Length / 2];
+        //        for (int i = 0; i < Corners.Length / 2; i++)
+        //        {
+        //            tempPoints[i].X = Convert.ToInt32(Corners[i * 2]);
+        //            tempPoints[i].Y = Convert.ToInt32(Corners[i * 2 + 1]);
+        //            if (Convert.ToInt32(Corners[i * 2]) > tempMaxX)
+        //                tempMaxX = Convert.ToInt32(Corners[i * 2]);
+        //            if (Convert.ToInt32(Corners[i * 2 + 1]) > tempMaxY)
+        //                tempMaxY = Convert.ToInt32(Corners[i * 2 + 1]);
+        //        }
+        //        Field.countries[Counter] = new Country(tempName, tempPoints, tempColor);
+        //        Counter++;
+        //    }
+        //    Field.height = tempMaxY;
+        //    Field.width = tempMaxX;
+
+        //    // springt an Anfang der Datei
+        //    fs.Position = 0;
+        //    sr.DiscardBufferedData();
+        //    //sr.BaseStream.Seek(0, SeekOrigin.Begin);
+
+
+
+
+
+        //    // Zähler kann von oben verwendet werden, wird auf 0 zurück gesetzt
+        //    Counter = 0;
+        //    while (sr.Peek() != -1)
+        //    {
+        //        // nächste Zeile in zeile speichern
+        //        zeile = sr.ReadLine();
+        //        // Leerzeichen und Tabs entfernen
+        //        zeile = zeile.Trim('\t', ' ');
+        //        // Zeile zerlegen
+        //        string[] Parts = zeile.Split('.');
+
+        //        string[] Neighbours = Parts[5].Split(';');
+        //        string[] tempNeighbouringCountries = new string[Neighbours.Length];
+        //        for (int i = 0; i < Neighbours.Length; ++i)
+        //        {
+        //            int tempCountryID = Convert.ToInt32(Neighbours[i]);
+        //            tempNeighbouringCountries[i] = Field.countries[tempCountryID - 1].name;
+        //        }
+
+        //        Field.countries[Counter].neighbouringCountries = tempNeighbouringCountries;
+        //        Counter++;
+        //    }
+
+
+
+        //    // Ende,  streamreader schließen, kappt Verbindung zur Txt-Datei
+        //    sr.Close();
+        //}
+
+
     }
 }
