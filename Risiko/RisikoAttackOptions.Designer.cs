@@ -5,7 +5,7 @@
         /// <summary>
         /// Required designer variable.
         /// </summary>
-        private System.ComponentModel.IContainer components = null;
+        internal System.ComponentModel.IContainer components = null;
 
         /// <summary>
         /// Clean up any resources being used.
@@ -26,7 +26,7 @@
         /// Required method for Designer support - do not modify
         /// the contents of this method with the code editor.
         /// </summary>
-        private void InitializeComponent()
+        internal void InitializeComponent()
         {
             this.rBAllMen = new System.Windows.Forms.RadioButton();
             this.gBAttackersOptions = new System.Windows.Forms.GroupBox();
@@ -112,11 +112,11 @@
 
         #endregion
 
-        private System.Windows.Forms.RadioButton rBAllMen;
-        private System.Windows.Forms.GroupBox gBAttackersOptions;
-        private System.Windows.Forms.NumericUpDown numUDCustomAttackers;
-        private System.Windows.Forms.RadioButton rBCustomAttackers;
-        private System.Windows.Forms.RadioButton rB3EveryTime;
+        internal System.Windows.Forms.RadioButton rBAllMen;
+        internal System.Windows.Forms.GroupBox gBAttackersOptions;
+        internal System.Windows.Forms.NumericUpDown numUDCustomAttackers;
+        internal System.Windows.Forms.RadioButton rBCustomAttackers;
+        internal System.Windows.Forms.RadioButton rB3EveryTime;
 
     }
 }

@@ -10,11 +10,11 @@ namespace Games
     {
 
         // Um auf aufrufende Klasse zugreifen zu können
-        private Launcher Caller;
+        internal Launcher Caller;
 
         // Speichert den "Index" des Spiels ab, das gespielt werden soll
         // gestartet, fortgesetzt usw
-        private int GameToPlay = 0;
+        internal int GameToPlay = 0;
         public int gameToPlay
         {
             get { return GameToPlay; }

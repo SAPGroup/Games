@@ -14,9 +14,9 @@ namespace Risiko
     internal class GameControl
     {    
         // Verbindung zu Main
-        private RisikoMain Main;
+        internal RisikoMain Main;
         // Spielfeld
-        private GameField Field = new GameField();
+        internal GameField Field = new GameField();
         public GameField field
         {
             get { return Field; }
@@ -25,7 +25,7 @@ namespace Risiko
         /// <summary>
         /// verschiedene Spieler
         /// </summary>
-        private Player[] Players;
+        internal Player[] Players;
         public Player[] players
         {
             get { return Players; }
@@ -36,11 +36,11 @@ namespace Risiko
         /// 1 setzen vor jeder Runde der Spieler
         /// 2 angreifen, 3 ziehen
         /// </summary>
-        private int GameState = -1;
+        internal int GameState = -1;
         /// <summary>
         /// Aktueller Spieler
         /// </summary>
-        private Player ActualPlayer;
+        internal Player ActualPlayer;
         public Player actualPlayer
         {
             get { return ActualPlayer; }
@@ -51,14 +51,14 @@ namespace Risiko
         /// <summary>
         /// Zum Ein-Auslesen aus 
         /// </summary>
-        private FileStream fs;
-        private StreamReader sr;
-        private StreamWriter sw;// TODO: abspeichern 
+        internal FileStream fs;
+        internal StreamReader sr;
+        internal StreamWriter sw;// TODO: abspeichern 
 
         /// <summary>
         /// Quelle aus der die Karte gelesen werden soll TODO: veränderbare Quelldatei
         /// </summary>
-        private string TxtDataSource = "WorldmapWithTabel.txt";
+        internal string TxtDataSource = "WorldmapWithTabel.txt";
         public string txtDataSource
         {
             get { return TxtDataSource; }
@@ -67,7 +67,7 @@ namespace Risiko
         /// <summary>
         /// String Array aus Quelldatei
         /// </summary>
-        private string[] TxtSource;
+        internal string[] TxtSource;
         
         
         //ZufallszahlenGenerator
@@ -77,14 +77,14 @@ namespace Risiko
         //Einheiten
         // Array der die Anzahl der Einheiten die der Spieler setzen möchte speichert
         // in die Länder in seinem Besitz
-        private int[] UnitsToAdd;
+        internal int[] UnitsToAdd;
         public int[] unitsToAdd
         {
             get { return UnitsToAdd; }
             set { UnitsToAdd = value; }
         }
 
-        private bool StartUnitAdding = false;
+        internal bool StartUnitAdding = false;
         public bool startUnitAdding
         {
             get { return StartUnitAdding; }
@@ -92,7 +92,7 @@ namespace Risiko
         }
         
 
-        // ZUM ZEICHNEN, TODO: Private -> set,get
+        // ZUM ZEICHNEN, TODO: internal -> set,get
         // false wenn Karte noch gar nicht gezeichnet wurde
         public bool DrawnMap = false;
         // false echte SpielerFarben, sonst blasser
@@ -102,16 +102,16 @@ namespace Risiko
         // Index des zuletzt angeklickten Landes, bei Angreifen und Ziehen (game.gamestate 2 und 3) wichtig
         public int tempClickedIndex = -1;
         // Faktor zum zeichnen
-        private int Factor;
+        internal int Factor;
         public int factor
         {
             get { return Factor; }
         }
         //
-        private Color tempSelCountryColor;
+        internal Color tempSelCountryColor;
         
         //Einstellungen
-        private bool AutoLanderkennung = true;
+        internal bool AutoLanderkennung = true;
         public bool autoLanderkennung
         {
             get { return AutoLanderkennung; }
@@ -141,7 +141,7 @@ namespace Risiko
         /// <summary>
         /// Lädt Daten der Karte aus DB und lässt diese anschließend von Main zeichnen
         /// </summary>
-        private void DrawAndLoadMap()
+        internal void DrawAndLoadMap()
         {
             // Quelldatei auslesen
             TxtSource = LoadStringsFromTxtSource();
@@ -161,7 +161,7 @@ namespace Risiko
         /// <summary>
         /// Zeichnet Karte bei veränderung des Faktors erneut, ohne laden
         /// </summary>
-        private void DrawMapWoLoad()
+        internal void DrawMapWoLoad()
         {
             // alten Faktor zwischenspeichern
             int tempOldFactor = Factor;
@@ -260,7 +260,7 @@ namespace Risiko
         /// Liefert Index des aktuellen Spielers in Players-Array
         /// </summary>
         /// <returns></returns>
-        private int ActualPlayerIndex()
+        internal int ActualPlayerIndex()
         {
             for (int i = 0;i < Players.Length;++i)
             {
@@ -359,7 +359,7 @@ namespace Risiko
         /// <summary>
         /// Liest Kontinente aus TxtSource aus
         /// </summary>
-        private void LoadContinentsFromTxtSource()
+        internal void LoadContinentsFromTxtSource()
         {
             //Fehler verhindern
             if (TxtSource != null)
@@ -407,7 +407,7 @@ namespace Risiko
         /// <param name="Length"></param>
         /// <param name="ToSearchThrough"></param>
         /// <param name="ToSearch"></param>
-        private void SearchForSpecialPartFromTxtSource(ref int StartIndex, ref int Length, string[] ToSearchThrough, string ToSearch)
+        internal void SearchForSpecialPartFromTxtSource(ref int StartIndex, ref int Length, string[] ToSearchThrough, string ToSearch)
         {
             // Nicht gefunden, wenn diese Werte zurückgegeben werden
             StartIndex = -1;
@@ -435,7 +435,7 @@ namespace Risiko
         /// Lädt den gesamten Inhalt der Txt-Source-Datei in String-Array
         /// </summary>
         /// <returns></returns>
-        private string[] LoadStringsFromTxtSource()
+        internal string[] LoadStringsFromTxtSource()
         {
             string[] OutBuf = new string[0];
 
@@ -463,7 +463,7 @@ namespace Risiko
         /// <param name="ToAdd"></param>
         /// <param name="StringArray"></param>
         /// <returns></returns>
-        private string[] AddStringToStringArray(string ToAdd, string[] StringArray)
+        internal string[] AddStringToStringArray(string ToAdd, string[] StringArray)
         {
             string[] OutBuf = new string[StringArray.Length+1];
             for (int i = 0;i < StringArray.Length;++i)
@@ -478,7 +478,7 @@ namespace Risiko
         /// <summary>
         /// Setzt den Faktor der Darstellung der Karte
         /// </summary>
-        private void CheckFactor(int newWidth, int newHeight)
+        internal void CheckFactor(int newWidth, int newHeight)
         {
             int temp1 = newWidth / Field.width;
             int temp2 = newHeight / Field.height;
@@ -642,9 +642,9 @@ namespace Risiko
         ///// <summary>
         ///// Reader, zum Lesen aus der Datenbank
         ///// </summary>
-        //private OleDbConnection con = new OleDbConnection();
-        //private OleDbCommand cmd = new OleDbCommand();
-        //private OleDbDataReader reader;
+        //internal OleDbConnection con = new OleDbConnection();
+        //internal OleDbCommand cmd = new OleDbCommand();
+        //internal OleDbDataReader reader;
         ///// <summary>
         ///// Pfad der Quelldatei!!
         ///// syntax: con.ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;" +
@@ -652,11 +652,11 @@ namespace Risiko
         ///// 
         /////
         ///// </summary>
-        //private string DataSourceString = System.Environment.CurrentDirectory + "\\Risiko_Weltkarte2.accdb";
+        //internal string DataSourceString = System.Environment.CurrentDirectory + "\\Risiko_Weltkarte2.accdb";
         ///// <summary>
         ///// Lädt Länder aus DB
         ///// </summary>
-        //private void LoadCountriesFromDBSource()
+        //internal void LoadCountriesFromDBSource()
         //{
         //    // Source einbinden
         //    //DataSourceString = System.Environment.CurrentDirectory + "\\Risiko_Weltkarte1.accdb";
@@ -752,7 +752,7 @@ namespace Risiko
         ///// <summary>
         ///// Speichert Anzahl der Länder in Field.numberOfCountries ab
         ///// </summary>
-        //private void GetNumberOfCountriesDB()
+        //internal void GetNumberOfCountriesDB()
         //{
         //    cmd.Connection = con;
         //    cmd.CommandText = "select * from Worldmap;";
@@ -779,7 +779,7 @@ namespace Risiko
         ///// <summary>
         ///// Lädt Karte aus Textdatei
         ///// </summary>
-        //private void LoadCountriesFromTxtSource()
+        //internal void LoadCountriesFromTxtSource()
         //{
         //    // initialisieren der Reader, um aus Txt-Datei zu lesen
         //    fs = new FileStream(TxtDataSource, FileMode.Open);
@@ -867,7 +867,7 @@ namespace Risiko
         /// </summary>
         /// <param name="Txt"></param>
         /// <returns></returns>
-        //private int LoadNumberOfEntriesFromStrings(string[] Txt, int StartingIndex)
+        //internal int LoadNumberOfEntriesFromStrings(string[] Txt, int StartingIndex)
         //{
         //    int EntryCounter = 0;
         //    bool StartetCounting = false;

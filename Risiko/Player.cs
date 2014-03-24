@@ -13,40 +13,40 @@ namespace Risiko
         /// <summary>
         /// Array aller besetzten Länder
         /// </summary>
-        private Country[] OwnedCountries;
+        internal Country[] OwnedCountries;
 
         /// <summary>
         /// Name des Spielers
         /// </summary>
-        private string Name;
+        internal string Name;
 
         /// <summary>
         /// Die Anzahl der Männer in den besetzten Länder (Index passend zu OwnedCountries)
         /// </summary>
-        private int[] UnitsInCountries;
+        internal int[] UnitsInCountries;
 
         /// <summary>
         /// Die Anzahl der Männer die der Spieler am Anfang des Zuges setzten kann
         /// wird berechnet, nicht gesetzt
         /// </summary>
-        private int UnitsPT;
+        internal int UnitsPT;
 
         /// <summary>
         /// Legt fest ob Computergegner oder "richtiger" Spieler
         /// </summary>
-        private bool AIPlayer;
+        internal bool AIPlayer;
 
         /// <summary>
         /// Farbe des Spielers
         /// </summary>
-        private Color PlayerColor;
+        internal Color PlayerColor;
 
         /// <summary>
         /// Speichert die Anzahl der Männer die der Spieler bei Angriff pro
         /// Würfelrunde stellt
         /// 1 oder 2
         /// </summary>
-        private int NumberOfDefenders;
+        internal int NumberOfDefenders;
 
 
         // Konstruktoren

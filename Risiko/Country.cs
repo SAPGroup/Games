@@ -12,38 +12,38 @@ namespace Risiko
         /// <summary>
         /// Eckpunkte des Landes
         /// </summary>
-        private Point[] Corners;
+        internal Point[] Corners;
 
         /// <summary>
         /// Name des Landes
         /// </summary>
-        private string Name;
+        internal string Name;
 
         /// <summary>
         /// Farbe des Landes
         /// </summary>
-        private Color ColorOfCountry;
+        internal Color ColorOfCountry;
 
         /// <summary>
         /// Besitzender Spieler, -1 kein spieler
         /// </summary>
-        private Player Owner;
+        internal Player Owner;
 
         /// <summary>
         /// Anzahl der Einheiten im Land
         /// </summary>
-        private int UnitsStationed;
+        internal int UnitsStationed;
 
         /// <summary>
         /// Array in dem die Nachbarländer gespeichert sind
         /// </summary>
-        private string[] NeighbouringCountries;
+        internal string[] NeighbouringCountries;
 
         /// <summary>
         /// Speichert den Kontinent, zu dem das Land gehört
         /// 0-x , Kontinente, -1 unbelegt (noch nicht initialisiert)
         /// </summary>
-        private int Continent = -1;
+        internal int Continent = -1;
 
 
         //
@@ -123,7 +123,7 @@ namespace Risiko
         public string name
         {
             get { return Name; }
-            private set { Name = value; }
+            internal set { Name = value; }
         }
 
         /// <summary>
@@ -132,7 +132,7 @@ namespace Risiko
         public Point[] corners
         {
             get { return Corners; }
-            private set { Corners = value; }
+            internal set { Corners = value; }
         }
 
         /// <summary>

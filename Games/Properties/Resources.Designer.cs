@@ -25,11 +25,11 @@ namespace Games.Properties
     internal class Resources
     {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+        internal static global::System.Resources.ResourceManager resourceMan;
 
-        private static global::System.Globalization.CultureInfo resourceCulture;
+        internal static global::System.Globalization.CultureInfo resourceCulture;
 
-        [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
+        [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledinternalCode")]
         internal Resources()
         {
         }

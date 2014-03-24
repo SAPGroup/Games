@@ -5,7 +5,7 @@
         /// <summary>
         /// Required designer variable.
         /// </summary>
-        private System.ComponentModel.IContainer components = null;
+        internal System.ComponentModel.IContainer components = null;
 
         /// <summary>
         /// Clean up any resources being used.
@@ -26,7 +26,7 @@
         /// Required method for Designer support - do not modify
         /// the contents of this method with the code editor.
         /// </summary>
-        private void InitializeComponent()
+        internal void InitializeComponent()
         {
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.dateiToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -194,18 +194,18 @@
 
         #endregion
 
-        private System.Windows.Forms.MenuStrip menuStrip1;
-        private System.Windows.Forms.ToolStripMenuItem dateiToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem bearbeitenToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem einstellungenToolStripMenuItem;
-        private System.Windows.Forms.Panel pnlMap;
-        private System.Windows.Forms.Button btnDrawMap;
-        private System.Windows.Forms.Button btnEndMove;
-        private System.Windows.Forms.Label lblMessage;
-        private System.Windows.Forms.Button btnTest;
-        private System.Windows.Forms.ToolStripMenuItem einstellungenToolStripMenuItem1;
-        private System.Windows.Forms.TrackBar trackBar;
-        private System.Windows.Forms.Button btnOptions;
+        internal System.Windows.Forms.MenuStrip menuStrip1;
+        internal System.Windows.Forms.ToolStripMenuItem dateiToolStripMenuItem;
+        internal System.Windows.Forms.ToolStripMenuItem bearbeitenToolStripMenuItem;
+        internal System.Windows.Forms.ToolStripMenuItem einstellungenToolStripMenuItem;
+        internal System.Windows.Forms.Panel pnlMap;
+        internal System.Windows.Forms.Button btnDrawMap;
+        internal System.Windows.Forms.Button btnEndMove;
+        internal System.Windows.Forms.Label lblMessage;
+        internal System.Windows.Forms.Button btnTest;
+        internal System.Windows.Forms.ToolStripMenuItem einstellungenToolStripMenuItem1;
+        internal System.Windows.Forms.TrackBar trackBar;
+        internal System.Windows.Forms.Button btnOptions;
     }
 }
 

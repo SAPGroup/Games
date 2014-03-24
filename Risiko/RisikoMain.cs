@@ -15,12 +15,12 @@ namespace Risiko
     public partial class RisikoMain : Form
     {
         //
-        private Bitmap z_asBitmap;                                              //Bilddatei der Graphic z
-        private Graphics z;
-        private Pen stift;  
+        internal Bitmap z_asBitmap;                                              //Bilddatei der Graphic z
+        internal Graphics z;
+        internal Pen stift;  
 
         // Control
-        private GameControl Control;
+        internal GameControl Control;
         internal GameControl control
         {
             get { return Control; }
@@ -32,7 +32,7 @@ namespace Risiko
             InitializeComponent();
         }
 
-        private void RisikoMain_Load(object sender, EventArgs e)
+        internal void RisikoMain_Load(object sender, EventArgs e)
         {
             // Rücksetzen des Nachrichtenlabels
             lblMessage.Text = "";
@@ -64,12 +64,12 @@ namespace Risiko
             
         }
 
-        private void btnTest_Click(object sender, EventArgs e)
+        internal void btnTest_Click(object sender, EventArgs e)
         {
             
         }
 
-        private void btnDrawMap_Click(object sender, EventArgs e)
+        internal void btnDrawMap_Click(object sender, EventArgs e)
         {
             Control.DrawMap();
         }
@@ -88,17 +88,17 @@ namespace Risiko
             return data;
         }
 
-        private void ResizeMap(object sender, EventArgs e)
+        internal void ResizeMap(object sender, EventArgs e)
         {
             Control.DrawMap();
         }
 
-        private void einstellungenToolStripMenuItem1_Click(object sender, EventArgs e)
+        internal void einstellungenToolStripMenuItem1_Click(object sender, EventArgs e)
         {
             //TODO: Open PropertiesForm -> machen
         }
 
-        private void pnlMap_MouseMove(object sender, MouseEventArgs e)
+        internal void pnlMap_MouseMove(object sender, MouseEventArgs e)
         {
             Control.MouseMoved(e);
         }
@@ -272,17 +272,17 @@ namespace Risiko
         }
 
 
-        private void pnlMap_Paint(object sender, PaintEventArgs e)
+        internal void pnlMap_Paint(object sender, PaintEventArgs e)
         {
 
         }
 
-        private void trackBar_Scroll(object sender, EventArgs e)
+        internal void trackBar_Scroll(object sender, EventArgs e)
         {
 
         }
 
-        private void btnOptions_Click(object sender, EventArgs e)
+        internal void btnOptions_Click(object sender, EventArgs e)
         {
             RisikoAttackOptions Opt = new RisikoAttackOptions(this);
             Opt.Show();

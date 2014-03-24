@@ -35,8 +35,8 @@ namespace Launcher.Tests
             Assert.AreEqual(temp, true);
 
             //Risiko.GameControl target;
-            //PrivateObject obj = new PrivateObject(target);
-            //var retVal = obj.Invoke("PrivateMethod");
+            //internalObject obj = new internalObject(target);
+            //var retVal = obj.Invoke("internalMethod");
             //Assert.AreEqual(retVal);
         }
 
@@ -57,8 +57,8 @@ namespace Launcher.Tests
             Assert.AreEqual(temp, false);
 
             //Risiko.GameControl target;
-            //PrivateObject obj = new PrivateObject(target);
-            //var retVal = obj.Invoke("PrivateMethod");
+            //internalObject obj = new internalObject(target);
+            //var retVal = obj.Invoke("internalMethod");
             //Assert.AreEqual(retVal);
         }
 

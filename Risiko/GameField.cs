@@ -11,28 +11,28 @@ namespace Risiko
         /// <summary>
         /// Daten von Gamefield, Anzahl der Läbder, Höhe und Breite
         /// </summary>
-        private int NumberOfCountries;
+        internal int NumberOfCountries;
         public int numberOfCountries
         {
             get { return NumberOfCountries; }
             set { NumberOfCountries = value; }
         }
 
-        private int Height;
+        internal int Height;
         public int height
         {
             get { return Height; }
             set { Height = value; }
         }
 
-        private int Width;
+        internal int Width;
         public int width
         {
             get { return Width; }
             set { Width = value; }
         }
 
-        private Continent[] Continents;
+        internal Continent[] Continents;
         public Continent[] continents
         {
             get { return Continents; }
@@ -47,7 +47,7 @@ namespace Risiko
         /// <summary>
         /// Länder des Spielfelds
         /// </summary>
-        private Country[] Countries;
+        internal Country[] Countries;
         public Country[] countries
         {
             get { return Countries; }
@@ -67,7 +67,7 @@ namespace Risiko
         /// beschränkt den Zugriff auf die Angabe der Anzahl der Länder
         /// wenn Anzahl aus Source geladen -> kein Zugriff mehr
         /// </summary>
-        //private bool NumberOfCountriesAccesible = true;
+        //internal bool NumberOfCountriesAccesible = true;
 
     }
 }

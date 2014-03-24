@@ -12,7 +12,8 @@ namespace Risiko
 {
     public partial class RisikoAttackOptions : Form
     {
-        private RisikoMain Caller;
+        internal RisikoMain Caller;
+        internal Player ActualPlayer;
 
         public RisikoAttackOptions(RisikoMain CallerIn)
         {
@@ -21,24 +22,23 @@ namespace Risiko
             Caller = CallerIn;
         }
 
-        private void RisikoAttackOptions_Load(object sender, EventArgs e)
+        internal void RisikoAttackOptions_Load(object sender, EventArgs e)
         {
             Location = Caller.GivePopUpPos();
             Location = new Point(Location.X, Location.Y-Height);
 
             numUDCustomAttackers.Minimum = 1;
-            //numUDCustomAttackers.Maximum = Caller.control.        TODO: Men in country -1
+            numUDCustomAttackers.Maximum = Caller.control.actualPlayer.unitsInCountry[Caller.control.tempIndex]; // TODO: Index
             numUDCustomAttackers.Visible = false;
-            
         }
 
         //Schließt wenn Klick außerhalb
-        private void RisikoAttackOptionsDeactivate(object sender, EventArgs e)
+        internal void RisikoAttackOptionsDeactivate(object sender, EventArgs e)
         {
             Close();
         }
 
-        private void rBCustomAttackers_CheckedChanged(object sender, EventArgs e)
+        internal void rBCustomAttackers_CheckedChanged(object sender, EventArgs e)
         {
             numUDCustomAttackers.Visible = rBCustomAttackers.Checked;
         }

@@ -5,7 +5,7 @@
         /// <summary>
         /// Required designer variable.
         /// </summary>
-        private System.ComponentModel.IContainer components = null;
+        internal System.ComponentModel.IContainer components = null;
 
         /// <summary>
         /// Clean up any resources being used.
@@ -26,7 +26,7 @@
         /// Required method for Designer support - do not modify
         /// the contents of this method with the code editor.
         /// </summary>
-        private void InitializeComponent()
+        internal void InitializeComponent()
         {
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
@@ -185,16 +185,16 @@
 
         #endregion
 
-        private System.Windows.Forms.PictureBox pBGame1;
-        private System.Windows.Forms.MenuStrip menuStripMain;
-        private System.Windows.Forms.ToolStripMenuItem dateiToolStripMenuItem;
-        private System.Windows.Forms.Button btnPlayGame1;
-        private System.Windows.Forms.Button btnNewGame;
-        private System.Windows.Forms.Button btnLoadGame;
-        private System.Windows.Forms.DataGridView dGVNewGame;
-        private System.Windows.Forms.DataGridViewTextBoxColumn PlayerName;
-        private System.Windows.Forms.DataGridViewComboBoxColumn PlayerColor;
-        private System.Windows.Forms.DataGridViewCheckBoxColumn PlayerIsAi;
+        internal System.Windows.Forms.PictureBox pBGame1;
+        internal System.Windows.Forms.MenuStrip menuStripMain;
+        internal System.Windows.Forms.ToolStripMenuItem dateiToolStripMenuItem;
+        internal System.Windows.Forms.Button btnPlayGame1;
+        internal System.Windows.Forms.Button btnNewGame;
+        internal System.Windows.Forms.Button btnLoadGame;
+        internal System.Windows.Forms.DataGridView dGVNewGame;
+        internal System.Windows.Forms.DataGridViewTextBoxColumn PlayerName;
+        internal System.Windows.Forms.DataGridViewComboBoxColumn PlayerColor;
+        internal System.Windows.Forms.DataGridViewCheckBoxColumn PlayerIsAi;
     }
 }
 

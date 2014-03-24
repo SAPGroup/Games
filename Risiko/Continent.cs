@@ -12,7 +12,7 @@ namespace Risiko
         /// Anzahl der zusätzklichen Einheiten die ein Spieler erhält
         /// wenn er den ganzen Kontinent besitzt
         /// </summary>
-        private int AdditionalMen;
+        internal int AdditionalMen;
         public int additionalMen
         {
             get { return AdditionalMen; }
@@ -22,7 +22,7 @@ namespace Risiko
         /// <summary>
         /// Name des Kontinents
         /// </summary>
-        private string NameOfContinent;
+        internal string NameOfContinent;
         public string nameOfContinent
         {
             get { return NameOfContinent; }
@@ -32,7 +32,7 @@ namespace Risiko
         /// <summary>
         /// Länder des Kontinents
         /// </summary>
-        private Country[] CountriesOfContinent;
+        internal Country[] CountriesOfContinent;
         public Country[] countriesOfContinent
         {
             get { return CountriesOfContinent; }
