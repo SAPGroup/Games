@@ -49,6 +49,12 @@
     <Compile Include="GameControl.cs" />
     <Compile Include="GameField.cs" />
     <Compile Include="Player.cs" />
+    <Compile Include="RisikoAttackOptions.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="RisikoAttackOptions.Designer.cs">
+      <DependentUpon>RisikoAttackOptions.cs</DependentUpon>
+    </Compile>
     <Compile Include="RisikoMain.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -57,6 +63,9 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="RisikoAttackOptions.resx">
+      <DependentUpon>RisikoAttackOptions.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="RisikoMain.resx">
       <DependentUpon>RisikoMain.cs</DependentUpon>
     </EmbeddedResource>

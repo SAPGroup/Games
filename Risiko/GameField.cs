@@ -32,14 +32,17 @@ namespace Risiko
             set { Width = value; }
         }
 
+        private Continent[] Continents;
+        public Continent[] continents
+        {
+            get { return Continents; }
+            set { Continents = value; }
+        }
         
 
-        /// <summary>
-        /// beschränkt den Zugriff auf die Angabe der Anzahl der Länder
-        /// wenn Anzahl aus Source geladen -> kein Zugriff mehr
-        /// </summary>
-        private bool NumberOfCountriesAccesible = true;
+        
 
+     
 
         /// <summary>
         /// Länder des Spielfelds
@@ -55,5 +58,16 @@ namespace Risiko
         {
             return Countries[i];
         }
+
+
+
+
+        //OLD
+        /// <summary>
+        /// beschränkt den Zugriff auf die Angabe der Anzahl der Länder
+        /// wenn Anzahl aus Source geladen -> kein Zugriff mehr
+        /// </summary>
+        //private bool NumberOfCountriesAccesible = true;
+
     }
 }

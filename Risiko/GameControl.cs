@@ -53,17 +53,21 @@ namespace Risiko
         /// </summary>
         private FileStream fs;
         private StreamReader sr;
-        private StreamWriter sw;
+        private StreamWriter sw;// TODO: abspeichern 
 
         /// <summary>
-        /// Quelle aus der die Karte gelesen werden soll
+        /// Quelle aus der die Karte gelesen werden soll TODO: veränderbare Quelldatei
         /// </summary>
-        private string TxtDataSource = "WorldmapWithTabel.txt";//"WorldmapWT.txt";
+        private string TxtDataSource = "WorldmapWithTabel.txt";
         public string txtDataSource
         {
             get { return TxtDataSource; }
             set { TxtDataSource = value; }
         }
+        /// <summary>
+        /// String Array aus Quelldatei
+        /// </summary>
+        private string[] TxtSource;
         
         
         //ZufallszahlenGenerator
@@ -133,14 +137,18 @@ namespace Risiko
             else
                 DrawAndLoadMap();
         }
+
         /// <summary>
         /// Lädt Daten der Karte aus DB und lässt diese anschließend von Main zeichnen
         /// </summary>
         private void DrawAndLoadMap()
         {
-            //Länder aus Quelldatei lesen
+            // Quelldatei auslesen
+            TxtSource = LoadStringsFromTxtSource();
+            //Länder aus QuellStringArray lesen
             LoadCountriesFromTxtSource();
-            // 
+            //Kontinente aus QuellStringArray lesen
+            LoadContinentsFromTxtSource();
 
             int[] WidthHeight = Main.GetMapData();
             CheckFactor(WidthHeight[0], WidthHeight[1]);
@@ -247,7 +255,6 @@ namespace Risiko
             }
         }
 
-
         // Sonstiges
         /// <summary>
         /// Liefert Index des aktuellen Spielers in Players-Array
@@ -263,114 +270,130 @@ namespace Risiko
             return -1;
         }
 
-
-        private void LoadCountriesFromTxtSource()
-        {
-            // Txt Datei auslesen, kann in ganzer Methode dann weiter verwendet werden
-            string[] TxtSource = LoadStringsFromTxtSource();
-
-            //StartIndex der Länder und Länge
-            int StartIndex = 0, Length = 0;
-            SearchForSpecialPartFromTxtSource(ref StartIndex, ref Length, TxtSource, "Continents");
-
-            // erzeugt Länder Array und setzt Länge dessen in Field fest
-            Field.numberOfCountries = Length;
-            Field.countries = new Country[Length];
-
-
-
-            // !!!             Länder auslesen          !!!
-            
-
-            // temp-Werte der Länder
-            string tempName;
-            Color tempColor;
-            Point[] tempPoints;
-            // Um die Maximalen Werte der Karte auszulesen
-            int tempMaxX = 0, tempMaxY = 0;
-
-            for(int j = 0; j < Length; ++j)
-            {
-                string zeile = TxtSource[StartIndex+j];
-                //Kommentarzeilen überspringen
-                if (zeile.StartsWith("//"))
-                    continue;
-                //Tabs und Leerzeichen entfernen
-                zeile = zeile.Trim('\t', ' ');
-                // Zeile zerlegen
-                string[] Parts = zeile.Split('.');
-
-                // Name und Farbe des Landes auslesen
-                tempColor = GetColorFromString(Parts[0]);
-                tempName = Parts[1];
-
-                // Eckpunkte des Landes auslesen, -> String wieder zerlegen
-                string[] Corners = Parts[4].Split(';');
-                // Länge von tempPoints festlegen
-                tempPoints = new Point[Corners.Length / 2];
-                for (int i = 0; i < Corners.Length / 2; i++)
-                {
-                    tempPoints[i].X = Convert.ToInt32(Corners[i * 2]);
-                    tempPoints[i].Y = Convert.ToInt32(Corners[i * 2 + 1]);
-                    if (Convert.ToInt32(Corners[i * 2]) > tempMaxX)
-                        tempMaxX = Convert.ToInt32(Corners[i * 2]);
-                    if (Convert.ToInt32(Corners[i * 2 + 1]) > tempMaxY)
-                        tempMaxY = Convert.ToInt32(Corners[i * 2 + 1]);
-                }
-                Field.countries[j] = new Country(tempName, tempPoints, tempColor);
-            }
-            Field.height = tempMaxY;
-            Field.width = tempMaxX;
-
-
-            for (int j = 0; j < Length; ++j)
-            {
-                string zeile = TxtSource[StartIndex + j];
-                //Kommentarzeilen überspringen
-                if (zeile.StartsWith("//"))
-                    continue;
-                // Leerzeichen und Tabs entfernen
-                zeile = zeile.Trim('\t', ' ');
-                // Zeile zerlegen
-                string[] Parts = zeile.Split('.');
-
-                string[] Neighbours = Parts[5].Split(';');
-                string[] tempNeighbouringCountries = new string[Neighbours.Length];
-                for (int i = 0; i < Neighbours.Length; ++i)
-                {
-                    int tempCountryID = Convert.ToInt32(Neighbours[i]);
-                    tempNeighbouringCountries[i] = Field.countries[tempCountryID - 1].name;
-                }
-
-                Field.countries[j].neighbouringCountries = tempNeighbouringCountries;
-            }
-
-        }
-
-        
         /// <summary>
-        /// Zählt Einträge zwischen Start und End, ab StartIndex
+        /// Liest Länder aus TxtSource aus
         /// </summary>
-        /// <param name="Txt"></param>
-        /// <returns></returns>
-        private int LoadNumberOfEntriesFromStrings(string[] Txt, int StartingIndex)
+        internal void LoadCountriesFromTxtSource()
         {
-            int EntryCounter = 0;
-            bool StartetCounting = false;
-            for (int i = StartingIndex;i < Txt.Length;++i)
+            // Prüfen ob Auslesen erfolgreich war, sonst nichts tun
+            if (TxtSource != null)
             {
-                if (Txt[i][0] == '/' & Txt[i][0] == '/')
-                    continue;
-                else if (Txt[i].StartsWith("Start"))
-                    StartetCounting = true;
-                else if (Txt[i].StartsWith("End"))
-                    StartetCounting = false;
-                if (StartetCounting)
-                    EntryCounter++;
-            }
+                //StartIndex der Länder und Länge
+                int StartIndex = 0, Length = 0;
+                SearchForSpecialPartFromTxtSource(ref StartIndex, ref Length, TxtSource, "Countries");
 
-            return EntryCounter;
+                // erzeugt Länder Array und setzt Länge dessen in Field fest
+                Field.numberOfCountries = Length;
+                Field.countries = new Country[Length];
+
+
+
+                // !!!             Länder auslesen          !!!
+
+
+                // temp-Werte der Länder
+                string tempName;
+                Color tempColor;
+                Point[] tempPoints;
+                // Um die Maximalen Werte der Karte auszulesen
+                int tempMaxX = 0, tempMaxY = 0;
+
+                for (int j = 0; j < Length; ++j)
+                {
+                    string zeile = TxtSource[StartIndex + j];
+                    //Kommentarzeilen überspringen
+                    if (zeile.StartsWith("//"))
+                        continue;
+                    //Tabs und Leerzeichen entfernen
+                    zeile = zeile.Trim('\t', ' ');
+                    // Zeile zerlegen
+                    string[] Parts = zeile.Split('.');
+
+                    // Name und Farbe des Landes auslesen
+                    tempColor = GetColorFromString(Parts[0]);
+                    tempName = Parts[1];
+
+                    // Eckpunkte des Landes auslesen, -> String wieder zerlegen
+                    string[] Corners = Parts[4].Split(';');
+                    // Länge von tempPoints festlegen
+                    tempPoints = new Point[Corners.Length / 2];
+                    for (int i = 0; i < Corners.Length / 2; i++)
+                    {
+                        tempPoints[i].X = Convert.ToInt32(Corners[i * 2]);
+                        tempPoints[i].Y = Convert.ToInt32(Corners[i * 2 + 1]);
+                        if (Convert.ToInt32(Corners[i * 2]) > tempMaxX)
+                            tempMaxX = Convert.ToInt32(Corners[i * 2]);
+                        if (Convert.ToInt32(Corners[i * 2 + 1]) > tempMaxY)
+                            tempMaxY = Convert.ToInt32(Corners[i * 2 + 1]);
+                    }
+                    Field.countries[j] = new Country(tempName, tempPoints, tempColor);
+                }
+                Field.height = tempMaxY;
+                Field.width = tempMaxX;
+
+
+                for (int j = 0; j < Length; ++j)
+                {
+                    string zeile = TxtSource[StartIndex + j];
+                    //Kommentarzeilen überspringen
+                    if (zeile.StartsWith("//"))
+                        continue;
+                    // Leerzeichen und Tabs entfernen
+                    zeile = zeile.Trim('\t', ' ');
+                    // Zeile zerlegen
+                    string[] Parts = zeile.Split('.');
+
+                    string[] Neighbours = Parts[5].Split(';');
+                    string[] tempNeighbouringCountries = new string[Neighbours.Length];
+                    for (int i = 0; i < Neighbours.Length; ++i)
+                    {
+                        int tempCountryID = Convert.ToInt32(Neighbours[i]);
+                        tempNeighbouringCountries[i] = Field.countries[tempCountryID - 1].name;
+                    }
+
+                    Field.countries[j].neighbouringCountries = tempNeighbouringCountries;
+                }
+            }
         }
+
+        /// <summary>
+        /// Liest Kontinente aus TxtSource aus
+        /// </summary>
+        private void LoadContinentsFromTxtSource()
+        {
+            //Fehler verhindern
+            if (TxtSource != null)
+            {
+                //StartIndex der Kontinente und Länge
+                int StartIndex = 0, Length = 0;
+                SearchForSpecialPartFromTxtSource(ref StartIndex, ref Length, TxtSource, "Continents");
+
+                Field.continents = new Continent[Length];
+
+                // Vars
+                string tempName;
+                int tempAddUnits;
+
+                for (int i = 0;i < Length;++i)
+                {
+                    string zeile = TxtSource[StartIndex + i];
+                    //Kommentarzeilen überspringen
+                    if (zeile.StartsWith("//"))
+                        continue;
+                    //Tabs und Leerzeichen entfernen
+                    zeile = zeile.Trim('\t', ' ');
+                    // Zeile zerlegen
+                    string[] Parts = zeile.Split('.');
+
+                    tempName = Parts[0];
+                    tempAddUnits = Convert.ToInt32(Parts[1]);
+
+                    Field.continents[i] = new Continent(tempAddUnits, tempName);
+                }
+            }
+        }
+        
+       
 
 
         /// <summary>
@@ -627,7 +650,7 @@ namespace Risiko
         ///// syntax: con.ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;" +
         ///// "Data Source=C:\\Temp\\Risiko_Weltkarte.accdb";
         ///// 
-        ///// TODO: Durch Datei öfnnen verändern (neues Spiel -> Quelldatei auswählen usw)
+        /////
         ///// </summary>
         //private string DataSourceString = System.Environment.CurrentDirectory + "\\Risiko_Weltkarte2.accdb";
         ///// <summary>
@@ -638,27 +661,21 @@ namespace Risiko
         //    // Source einbinden
         //    //DataSourceString = System.Environment.CurrentDirectory + "\\Risiko_Weltkarte1.accdb";
         //    con.ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;" +
-        //                           "Data Source=" + DataSourceString;
-
+        //                          "Data Source=" + DataSourceString;
         //    // Anzahl der Länder auslesen
         //    GetNumberOfCountriesDB();
-
         //    cmd.Connection = con;
         //    // Aus table Weltkarte (alles)
         //    cmd.CommandText = "select * from Worldmap;";
-
         //    // Länder erzeugen
         //    Field.countries = new Country[Field.numberOfCountries];
-
         //    try
         //    {
         //        //öffnen
         //        con.Open();
         //        reader = cmd.ExecuteReader();
-
         //        // Fortlaufender Zähler, zählt welche Country aktuell erzeugt werden muss
         //        int counter = 0;
-
         //        // temp Werte, die später dem Konstruktor der Country zugeführt werden
         //        Color tempColorOfCountry;
         //        string tempName;
@@ -666,15 +683,12 @@ namespace Risiko
         //        // Max X und Y Werte, um Höhe und Breite der internen "kleinen" Karte herauszufinden
         //        int tempMaxX = 0;
         //        int tempMaxY = 0;
-
         //        while (reader.Read())
         //        {
         //            // Name
         //            tempName = Convert.ToString(reader["Name"]);
-
         //            // Color (Farbe)
         //            tempColorOfCountry = GetColorFromString(Convert.ToString(reader["Color"]));
-
         //            // Corners (Ecken)
         //            string tempCorners = Convert.ToString(reader["Corners"]);
         //            string[] Corners = tempCorners.Split(';');
@@ -688,7 +702,6 @@ namespace Risiko
         //                if (Convert.ToInt32(Corners[i * 2 + 1]) > tempMaxY)
         //                    tempMaxY = Convert.ToInt32(Corners[i * 2 + 1]);
         //            }
-
         //            // Konstruktor der Country
         //            Field.countries[counter] = new Country(tempName, tempPoints, tempColorOfCountry);
         //            counter++;
@@ -703,8 +716,6 @@ namespace Risiko
         //        // temp String, falls Fehlermeldung
         //        string temp = ex.Message;
         //    }
-
-
         //    // Laden der NachbarLänder, Countries muss schon festlegen, da daraus Namen
         //    // der Länder gelesen werden
         //    cmd.CommandText = "select * from Worldmap;";
@@ -713,13 +724,10 @@ namespace Risiko
         //        //öffnen
         //        con.Open();
         //        reader = cmd.ExecuteReader();
-
         //        // Fortlaufender Zähler, zählt welche Country aktuell erzeugt werden muss
         //        int counter = 0;
-
         //        while (reader.Read())
         //        {
-
         //            string tempNeighbours = Convert.ToString(reader["Neighbours"]);
         //            string[] Neighbours = tempNeighbours.Split(';');
         //            string[] tempNeighbouringCountries = new string[Neighbours.Length];
@@ -728,7 +736,6 @@ namespace Risiko
         //                int tempCountryID = Convert.ToInt32(Neighbours[i]);
         //                tempNeighbouringCountries[i] = Field.countries[tempCountryID - 1].name;
         //            }
-
         //            Field.countries[counter].neighbouringCountries = tempNeighbouringCountries;
         //            counter++;
         //        }
@@ -777,10 +784,8 @@ namespace Risiko
         //    // initialisieren der Reader, um aus Txt-Datei zu lesen
         //    fs = new FileStream(TxtDataSource, FileMode.Open);
         //    sr = new StreamReader(fs);
-
         //    int NumberOfCountries = 0;
         //    string zeile;
-
         //    while (sr.Peek() != -1)
         //    {
         //        // nächste Zeile in zeile speichern
@@ -790,13 +795,9 @@ namespace Risiko
         //    // erzeugt Länder Array und setzt Länge dessen in Field fest
         //    Field.numberOfCountries = NumberOfCountries;
         //    Field.countries = new Country[NumberOfCountries];
-
         //    // springt an Anfang der Datei
         //    fs.Position = 0;
         //    sr.DiscardBufferedData();
-
-
-
         //    // temp-Werte der Länder
         //    string tempName;
         //    Color tempColor;
@@ -805,7 +806,6 @@ namespace Risiko
         //    int tempMaxX = 0, tempMaxY = 0;
         //    // Zähler für die erzeugten Länder
         //    int Counter = 0;
-
         //    while (sr.Peek() != -1)
         //    {
         //        // nächste Zeile in zeile speichern
@@ -817,11 +817,9 @@ namespace Risiko
         //        zeile = zeile.Trim('\t', ' ');
         //        // Zeile zerlegen
         //        string[] Parts = zeile.Split('.');
-
         //        // Name und Farbe des Landes auslesen
         //        tempColor = GetColorFromString(Parts[0]);
         //        tempName = Parts[1];
-
         //        // Eckpunkte des Landes auslesen, -> String wieder zerlegen
         //        string[] Corners = Parts[4].Split(';');
         //        // Länge von tempPoints festlegen
@@ -840,16 +838,10 @@ namespace Risiko
         //    }
         //    Field.height = tempMaxY;
         //    Field.width = tempMaxX;
-
         //    // springt an Anfang der Datei
         //    fs.Position = 0;
         //    sr.DiscardBufferedData();
         //    //sr.BaseStream.Seek(0, SeekOrigin.Begin);
-
-
-
-
-
         //    // Zähler kann von oben verwendet werden, wird auf 0 zurück gesetzt
         //    Counter = 0;
         //    while (sr.Peek() != -1)
@@ -860,7 +852,6 @@ namespace Risiko
         //        zeile = zeile.Trim('\t', ' ');
         //        // Zeile zerlegen
         //        string[] Parts = zeile.Split('.');
-
         //        string[] Neighbours = Parts[5].Split(';');
         //        string[] tempNeighbouringCountries = new string[Neighbours.Length];
         //        for (int i = 0; i < Neighbours.Length; ++i)
@@ -868,13 +859,32 @@ namespace Risiko
         //            int tempCountryID = Convert.ToInt32(Neighbours[i]);
         //            tempNeighbouringCountries[i] = Field.countries[tempCountryID - 1].name;
         //        }
-
         //        Field.countries[Counter].neighbouringCountries = tempNeighbouringCountries;
         //        Counter++;
         //    }
+        /// <summary>
+        /// Zählt Einträge zwischen Start und End, ab StartIndex
+        /// </summary>
+        /// <param name="Txt"></param>
+        /// <returns></returns>
+        //private int LoadNumberOfEntriesFromStrings(string[] Txt, int StartingIndex)
+        //{
+        //    int EntryCounter = 0;
+        //    bool StartetCounting = false;
+        //    for (int i = StartingIndex; i < Txt.Length; ++i)
+        //    {
+        //        if (Txt[i][0] == '/' & Txt[i][0] == '/')
+        //            continue;
+        //        else if (Txt[i].StartsWith("Start"))
+        //            StartetCounting = true;
+        //        else if (Txt[i].StartsWith("End"))
+        //            StartetCounting = false;
+        //        if (StartetCounting)
+        //            EntryCounter++;
+        //    }
 
-
-
+        //    return EntryCounter;
+        //}
         //    // Ende,  streamreader schließen, kappt Verbindung zur Txt-Datei
         //    sr.Close();
         //}

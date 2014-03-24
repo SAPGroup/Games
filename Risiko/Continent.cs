@@ -39,5 +39,19 @@ namespace Risiko
             set { CountriesOfContinent = value; }
         }
 
+        /// <summary>
+        /// "Standard"konstruktor
+        /// </summary>
+        public Continent()
+        {
+            AdditionalMen = 0;
+            NameOfContinent = "";
+        }
+
+        public Continent(int AddMenIn, string Name)
+        {
+            AdditionalMen = AddMenIn;
+            NameOfContinent = Name;
+        }
     }
 }

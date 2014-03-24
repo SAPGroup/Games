@@ -39,6 +39,7 @@
             this.lblMessage = new System.Windows.Forms.Label();
             this.btnTest = new System.Windows.Forms.Button();
             this.trackBar = new System.Windows.Forms.TrackBar();
+            this.btnOptions = new System.Windows.Forms.Button();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.trackBar)).BeginInit();
             this.SuspendLayout();
@@ -147,11 +148,23 @@
             // trackBar
             // 
             this.trackBar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.trackBar.Location = new System.Drawing.Point(272, 386);
+            this.trackBar.Location = new System.Drawing.Point(310, 386);
             this.trackBar.Name = "trackBar";
             this.trackBar.Size = new System.Drawing.Size(113, 45);
             this.trackBar.TabIndex = 6;
             this.trackBar.Scroll += new System.EventHandler(this.trackBar_Scroll);
+            // 
+            // btnOptions
+            // 
+            this.btnOptions.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnOptions.BackColor = System.Drawing.Color.White;
+            this.btnOptions.Location = new System.Drawing.Point(207, 385);
+            this.btnOptions.Name = "btnOptions";
+            this.btnOptions.Size = new System.Drawing.Size(75, 23);
+            this.btnOptions.TabIndex = 7;
+            this.btnOptions.Text = "Temp";
+            this.btnOptions.UseVisualStyleBackColor = false;
+            this.btnOptions.Click += new System.EventHandler(this.btnOptions_Click);
             // 
             // RisikoMain
             // 
@@ -159,6 +172,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
             this.ClientSize = new System.Drawing.Size(606, 420);
+            this.Controls.Add(this.btnOptions);
             this.Controls.Add(this.trackBar);
             this.Controls.Add(this.btnTest);
             this.Controls.Add(this.lblMessage);
@@ -191,6 +205,7 @@
         private System.Windows.Forms.Button btnTest;
         private System.Windows.Forms.ToolStripMenuItem einstellungenToolStripMenuItem1;
         private System.Windows.Forms.TrackBar trackBar;
+        private System.Windows.Forms.Button btnOptions;
     }
 }
 

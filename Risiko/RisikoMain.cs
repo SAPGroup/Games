@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Windows;
 
 namespace Risiko
 {
@@ -20,6 +21,10 @@ namespace Risiko
 
         // Control
         private GameControl Control;
+        internal GameControl control
+        {
+            get { return Control; }
+        }
 
 
         public RisikoMain()
@@ -51,6 +56,12 @@ namespace Risiko
             btnTest.FlatStyle = FlatStyle.Flat;
             btnTest.FlatAppearance.BorderColor = Color.White;
             btnTest.FlatAppearance.BorderSize = 1;
+
+            btnOptions.FlatStyle = FlatStyle.Flat;
+            btnOptions.FlatAppearance.BorderColor = Color.White;
+            btnOptions.FlatAppearance.BorderSize = 1;
+
+            
         }
 
         private void btnTest_Click(object sender, EventArgs e)
@@ -269,6 +280,24 @@ namespace Risiko
         private void trackBar_Scroll(object sender, EventArgs e)
         {
 
+        }
+
+        private void btnOptions_Click(object sender, EventArgs e)
+        {
+            RisikoAttackOptions Opt = new RisikoAttackOptions(this);
+            Opt.Show();
+        }
+
+
+        // Sonstiges
+        public Point GivePopUpPos()
+        {
+            return new Point(Location.X + btnOptions.Location.X + 8, Location.Y + btnOptions.Location.Y + 29);
+        }
+
+        internal Player GiveActualPlayer()
+        {
+            return Control.actualPlayer;
         }
     }
 }
