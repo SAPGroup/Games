@@ -30,9 +30,9 @@
         {
             this.rBAllMen = new System.Windows.Forms.RadioButton();
             this.gBAttackersOptions = new System.Windows.Forms.GroupBox();
-            this.rB3EveryTime = new System.Windows.Forms.RadioButton();
-            this.rBCustomAttackers = new System.Windows.Forms.RadioButton();
             this.numUDCustomAttackers = new System.Windows.Forms.NumericUpDown();
+            this.rBCustomAttackers = new System.Windows.Forms.RadioButton();
+            this.rB3EveryTime = new System.Windows.Forms.RadioButton();
             this.gBAttackersOptions.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numUDCustomAttackers)).BeginInit();
             this.SuspendLayout();
@@ -56,21 +56,17 @@
             this.gBAttackersOptions.Controls.Add(this.rBAllMen);
             this.gBAttackersOptions.Location = new System.Drawing.Point(12, 12);
             this.gBAttackersOptions.Name = "gBAttackersOptions";
-            this.gBAttackersOptions.Size = new System.Drawing.Size(218, 100);
+            this.gBAttackersOptions.Size = new System.Drawing.Size(218, 95);
             this.gBAttackersOptions.TabIndex = 1;
             this.gBAttackersOptions.TabStop = false;
             this.gBAttackersOptions.Text = "Männer die Angreifen";
             // 
-            // rB3EveryTime
+            // numUDCustomAttackers
             // 
-            this.rB3EveryTime.AutoSize = true;
-            this.rB3EveryTime.Location = new System.Drawing.Point(6, 42);
-            this.rB3EveryTime.Name = "rB3EveryTime";
-            this.rB3EveryTime.Size = new System.Drawing.Size(62, 17);
-            this.rB3EveryTime.TabIndex = 1;
-            this.rB3EveryTime.TabStop = true;
-            this.rB3EveryTime.Text = "Immer 3";
-            this.rB3EveryTime.UseVisualStyleBackColor = true;
+            this.numUDCustomAttackers.Location = new System.Drawing.Point(140, 65);
+            this.numUDCustomAttackers.Name = "numUDCustomAttackers";
+            this.numUDCustomAttackers.Size = new System.Drawing.Size(72, 20);
+            this.numUDCustomAttackers.TabIndex = 3;
             // 
             // rBCustomAttackers
             // 
@@ -84,25 +80,30 @@
             this.rBCustomAttackers.UseVisualStyleBackColor = true;
             this.rBCustomAttackers.CheckedChanged += new System.EventHandler(this.rBCustomAttackers_CheckedChanged);
             // 
-            // numUDCustomAttackers
+            // rB3EveryTime
             // 
-            this.numUDCustomAttackers.Location = new System.Drawing.Point(140, 65);
-            this.numUDCustomAttackers.Name = "numUDCustomAttackers";
-            this.numUDCustomAttackers.Size = new System.Drawing.Size(72, 20);
-            this.numUDCustomAttackers.TabIndex = 3;
+            this.rB3EveryTime.AutoSize = true;
+            this.rB3EveryTime.Location = new System.Drawing.Point(6, 42);
+            this.rB3EveryTime.Name = "rB3EveryTime";
+            this.rB3EveryTime.Size = new System.Drawing.Size(62, 17);
+            this.rB3EveryTime.TabIndex = 1;
+            this.rB3EveryTime.TabStop = true;
+            this.rB3EveryTime.Text = "Immer 3";
+            this.rB3EveryTime.UseVisualStyleBackColor = true;
             // 
             // RisikoAttackOptions
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(251)))));
-            this.ClientSize = new System.Drawing.Size(242, 227);
+            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(226)))), ((int)(((byte)(225)))));
+            this.ClientSize = new System.Drawing.Size(242, 239);
             this.Controls.Add(this.gBAttackersOptions);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Name = "RisikoAttackOptions";
             this.Text = "RisikoAttackOptions";
             this.Deactivate += new System.EventHandler(this.RisikoAttackOptionsDeactivate);
             this.Load += new System.EventHandler(this.RisikoAttackOptions_Load);
+            this.MouseLeave += new System.EventHandler(this.RisikoAttackOptions_MouseLeave);
             this.gBAttackersOptions.ResumeLayout(false);
             this.gBAttackersOptions.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numUDCustomAttackers)).EndInit();

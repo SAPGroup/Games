@@ -12,11 +12,11 @@ namespace Risiko
         /// Anzahl der zusätzklichen Einheiten die ein Spieler erhält
         /// wenn er den ganzen Kontinent besitzt
         /// </summary>
-        internal int AdditionalMen;
-        public int additionalMen
+        internal int AdditionalUnits;
+        public int additionalUnits
         {
-            get { return AdditionalMen; }
-            set { AdditionalMen = value; }
+            get { return AdditionalUnits; }
+            set { AdditionalUnits = value; }
         }
 
         /// <summary>
@@ -29,29 +29,43 @@ namespace Risiko
             set { NameOfContinent = value; }
         }
 
+        // benötigt?
+        ///// <summary>
+        ///// Länder des Kontinents
+        ///// </summary>
+        //internal Country[] CountriesOfContinent;
+        //public Country[] countriesOfContinent
+        //{
+        //    get { return CountriesOfContinent; }
+        //    set { CountriesOfContinent = value; }
+        //}
+
+
         /// <summary>
-        /// Länder des Kontinents
+        /// Anzahl der beinhalteten Länder
         /// </summary>
-        internal Country[] CountriesOfContinent;
-        public Country[] countriesOfContinent
+        private int NumberOfCountries;
+        public int numberOfCountries
         {
-            get { return CountriesOfContinent; }
-            set { CountriesOfContinent = value; }
+            get { return NumberOfCountries; }
+            set { NumberOfCountries = value; }
         }
+        
 
         /// <summary>
         /// "Standard"konstruktor
         /// </summary>
         public Continent()
         {
-            AdditionalMen = 0;
+            AdditionalUnits = 0;
             NameOfContinent = "";
         }
 
-        public Continent(int AddMenIn, string Name)
+        public Continent(int AddMenIn, string Name, int CountriesIn)
         {
-            AdditionalMen = AddMenIn;
+            AdditionalUnits = AddMenIn;
             NameOfContinent = Name;
+            NumberOfCountries = CountriesIn;
         }
     }
 }

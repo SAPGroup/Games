@@ -59,15 +59,16 @@ namespace Risiko
             return Countries[i];
         }
 
+        public bool CountriesAreNeighbours(int C1, int C2)
+        {
+            string C2Name = Countries[C2].name;
+            for (int i = 0;i < Countries[C1].neighbouringCountries.Length;++i)
+            {
+                if (Countries[C1].neighbouringCountries[i] == C2Name)
+                    return true;
+            }
 
-
-
-        //OLD
-        /// <summary>
-        /// beschränkt den Zugriff auf die Angabe der Anzahl der Länder
-        /// wenn Anzahl aus Source geladen -> kein Zugriff mehr
-        /// </summary>
-        //internal bool NumberOfCountriesAccesible = true;
-
+            return false;
+        }
     }
 }

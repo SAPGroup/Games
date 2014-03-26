@@ -2,10 +2,6 @@
 {
     partial class RisikoMain
     {
-        /// <summary>
-        /// Required designer variable.
-        /// </summary>
-        internal System.ComponentModel.IContainer components = null;
 
         /// <summary>
         /// Clean up any resources being used.
@@ -28,6 +24,7 @@
         /// </summary>
         internal void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.dateiToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.bearbeitenToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -39,6 +36,7 @@
             this.lblMessage = new System.Windows.Forms.Label();
             this.btnTest = new System.Windows.Forms.Button();
             this.trackBar = new System.Windows.Forms.TrackBar();
+            this.timerDeleteMessage = new System.Windows.Forms.Timer(this.components);
             this.btnOptions = new System.Windows.Forms.Button();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.trackBar)).BeginInit();
@@ -93,9 +91,10 @@
             this.pnlMap.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.pnlMap.Location = new System.Drawing.Point(12, 27);
             this.pnlMap.Name = "pnlMap";
-            this.pnlMap.Size = new System.Drawing.Size(582, 353);
+            this.pnlMap.Size = new System.Drawing.Size(582, 372);
             this.pnlMap.TabIndex = 1;
             this.pnlMap.Paint += new System.Windows.Forms.PaintEventHandler(this.pnlMap_Paint);
+            this.pnlMap.MouseClick += new System.Windows.Forms.MouseEventHandler(this.pnlMap_MouseClick);
             this.pnlMap.MouseMove += new System.Windows.Forms.MouseEventHandler(this.pnlMap_MouseMove);
             this.pnlMap.Resize += new System.EventHandler(this.ResizeMap);
             // 
@@ -104,7 +103,7 @@
             this.btnDrawMap.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.btnDrawMap.BackColor = System.Drawing.Color.White;
             this.btnDrawMap.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
-            this.btnDrawMap.Location = new System.Drawing.Point(12, 386);
+            this.btnDrawMap.Location = new System.Drawing.Point(12, 469);
             this.btnDrawMap.Name = "btnDrawMap";
             this.btnDrawMap.Size = new System.Drawing.Size(99, 23);
             this.btnDrawMap.TabIndex = 2;
@@ -116,7 +115,7 @@
             // 
             this.btnEndMove.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnEndMove.BackColor = System.Drawing.Color.White;
-            this.btnEndMove.Location = new System.Drawing.Point(519, 386);
+            this.btnEndMove.Location = new System.Drawing.Point(519, 405);
             this.btnEndMove.Name = "btnEndMove";
             this.btnEndMove.Size = new System.Drawing.Size(75, 23);
             this.btnEndMove.TabIndex = 3;
@@ -127,7 +126,7 @@
             // 
             this.lblMessage.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.lblMessage.AutoSize = true;
-            this.lblMessage.Location = new System.Drawing.Point(152, 391);
+            this.lblMessage.Location = new System.Drawing.Point(21, 410);
             this.lblMessage.Name = "lblMessage";
             this.lblMessage.Size = new System.Drawing.Size(30, 13);
             this.lblMessage.TabIndex = 4;
@@ -137,7 +136,7 @@
             // 
             this.btnTest.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnTest.BackColor = System.Drawing.Color.White;
-            this.btnTest.Location = new System.Drawing.Point(429, 386);
+            this.btnTest.Location = new System.Drawing.Point(519, 469);
             this.btnTest.Name = "btnTest";
             this.btnTest.Size = new System.Drawing.Size(75, 23);
             this.btnTest.TabIndex = 5;
@@ -148,30 +147,37 @@
             // trackBar
             // 
             this.trackBar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.trackBar.Location = new System.Drawing.Point(310, 386);
+            this.trackBar.Location = new System.Drawing.Point(290, 405);
             this.trackBar.Name = "trackBar";
             this.trackBar.Size = new System.Drawing.Size(113, 45);
             this.trackBar.TabIndex = 6;
             this.trackBar.Scroll += new System.EventHandler(this.trackBar_Scroll);
             // 
+            // timerDeleteMessage
+            // 
+            this.timerDeleteMessage.Interval = 10000;
+            this.timerDeleteMessage.Tick += new System.EventHandler(this.timerDeleteMessage_Tick);
+            // 
             // btnOptions
             // 
             this.btnOptions.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnOptions.BackColor = System.Drawing.Color.White;
-            this.btnOptions.Location = new System.Drawing.Point(207, 385);
+            this.btnOptions.BackgroundImage = global::Risiko.Properties.Resources.DoppelpfeilGrossSchwarz;
+            this.btnOptions.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.btnOptions.Location = new System.Drawing.Point(256, 405);
             this.btnOptions.Name = "btnOptions";
-            this.btnOptions.Size = new System.Drawing.Size(75, 23);
+            this.btnOptions.Size = new System.Drawing.Size(28, 23);
             this.btnOptions.TabIndex = 7;
-            this.btnOptions.Text = "Temp";
             this.btnOptions.UseVisualStyleBackColor = false;
             this.btnOptions.Click += new System.EventHandler(this.btnOptions_Click);
+            this.btnOptions.MouseEnter += new System.EventHandler(this.btnOptions_MouseEnter);
             // 
             // RisikoMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
-            this.ClientSize = new System.Drawing.Size(606, 420);
+            this.ClientSize = new System.Drawing.Size(606, 503);
             this.Controls.Add(this.btnOptions);
             this.Controls.Add(this.trackBar);
             this.Controls.Add(this.btnTest);
@@ -206,6 +212,8 @@
         internal System.Windows.Forms.ToolStripMenuItem einstellungenToolStripMenuItem1;
         internal System.Windows.Forms.TrackBar trackBar;
         internal System.Windows.Forms.Button btnOptions;
+        internal System.Windows.Forms.Timer timerDeleteMessage;
+        private System.ComponentModel.IContainer components;
     }
 }
 

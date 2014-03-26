@@ -98,9 +98,20 @@ namespace Risiko
             //TODO: Open PropertiesForm -> machen
         }
 
+        //          !!!         Maussteuerung       !!!
+        /// <summary>
+        /// Bei Mausbewegung
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         internal void pnlMap_MouseMove(object sender, MouseEventArgs e)
         {
             Control.MouseMoved(e);
+        }
+
+        internal void pnlMap_MouseClick(object sender, MouseEventArgs e)
+        {
+            Control.MouseClicked(e);
         }
 
 
@@ -289,6 +300,9 @@ namespace Risiko
         }
 
 
+
+
+
         // Sonstiges
         public Point GivePopUpPos()
         {
@@ -298,6 +312,29 @@ namespace Risiko
         internal Player GiveActualPlayer()
         {
             return Control.actualPlayer;
+        }
+
+        public void ShowMessage(string Message)
+        {
+            lblMessage.Text = Message;
+        }
+
+        public void DeleteMessage()
+        {
+            lblMessage.Text = "";
+        }
+
+        internal void timerDeleteMessage_Tick(object sender, EventArgs e)
+        {
+            lblMessage.Text = "";
+            timerDeleteMessage.Enabled = false;
+        }
+
+
+        private void btnOptions_MouseEnter(object sender, EventArgs e)
+        {
+            RisikoAttackOptions Opt = new RisikoAttackOptions(this);
+            Opt.ShowDialog();
         }
     }
 }

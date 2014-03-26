@@ -46,7 +46,6 @@ namespace Risiko
         internal int Continent = -1;
 
 
-        //
         // Konstruktoren
         /// <summary>
         /// Basiskonstruktor, Corners werden nicht gesetzt, Name = leer
