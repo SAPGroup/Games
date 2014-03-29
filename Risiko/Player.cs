@@ -14,22 +14,50 @@ namespace Risiko
         /// Array aller besetzten Länder
         /// </summary>
         internal Country[] OwnedCountries;
+        public Country[] ownedCountries
+        {
+            get { return OwnedCountries; }
+            set { OwnedCountries = value; }
+        }
 
         /// <summary>
         /// Name des Spielers
         /// </summary>
         internal string Name;
+        public string name
+        {
+            get { return Name; }
+            set
+            {
+                if (value != "")
+                    Name = value;
+            }
+        }
 
         /// <summary>
         /// Die Anzahl der Männer in den besetzten Länder (Index passend zu OwnedCountries)
         /// </summary>
         internal int[] UnitsInCountries;
+        public int[] unitsInCountry
+        {
+            get { return UnitsInCountries; }
+            set { UnitsInCountries = value; }
+        }
 
         /// <summary>
         /// Die Anzahl der Männer die der Spieler am Anfang des Zuges setzten kann
-        /// wird berechnet, nicht gesetzt
+        /// wird berechnet
         /// </summary>
         internal int UnitsPT;
+        public int unitsPT
+        {
+            get { return UnitsPT; }
+            set
+            {
+                if (value >= 0)
+                    UnitsPT = value;
+            }
+        }
 
         /// <summary>
         /// Legt fest ob Computergegner oder "richtiger" Spieler
@@ -40,6 +68,11 @@ namespace Risiko
         /// Farbe des Spielers
         /// </summary>
         internal Color PlayerColor;
+        public Color playerColor
+        {
+            get { return PlayerColor; }
+            set { PlayerColor = value; }
+        }
 
         /// <summary>
         /// Speichert die Anzahl der Männer die der Spieler bei Angriff pro
@@ -47,6 +80,24 @@ namespace Risiko
         /// 1 oder 2
         /// </summary>
         internal int NumberOfDefenders;
+        public int numberOfDefenders
+        {
+            get { return NumberOfDefenders; }
+            set
+            {
+                if (value == 1 | value == 2)
+                    NumberOfDefenders = value;
+            }
+        }
+
+        //Einstellungen
+        /// <summary>
+        /// Legt Angriffseinstellungen des Spielers fest
+        /// 0: alle
+        /// 1: immer 3
+        /// 2: Anzahl
+        /// </summary>
+        internal int SettingAttack;
 
 
         // Konstruktoren
@@ -90,73 +141,9 @@ namespace Risiko
             NumberOfDefenders = 1;
         }
 
-        // Set- und Get- Methoden
-        /// <summary>
-        /// Set und Get des Namens des Spielers
-        /// </summary>
-        public string name
-        {
-            get { return Name; }
-            set
-            {
-                if (value != "")
-                    Name = value;
-            }
-        }
+        
 
-        /// <summary>
-        /// Set- und Get- Methode der Einheiten der besetzten Ländern
-        /// </summary>
-        public int[] unitsInCountry
-        {
-            get { return UnitsInCountries; }
-            set { UnitsInCountries = value; }
-        }
-
-        /// <summary>
-        /// Set- und Get- Methode der besetzten Ländern
-        /// </summary>
-        public Country[] ownedCountries
-        {
-            get { return OwnedCountries; }
-            set { OwnedCountries = value; }
-        }
-
-        /// <summary>
-        /// Set- und Get- Methode der Einehiten pro Runde, 
-        /// minimal 3 Männer pro Runde
-        /// </summary>
-        public int unitsPT
-        {
-            get { return UnitsPT; }
-            set
-            {
-                if (value >= 0)
-                    UnitsPT = value;
-            }
-        }
-
-        /// <summary>
-        /// Set und Get der SpielerFarbe
-        /// </summary>
-        public Color playerColor
-        {
-            get { return PlayerColor; }
-            set { PlayerColor = value; }
-        }
-
-        /// <summary>
-        /// Set und Get der Anzahl der Verteidiger
-        /// </summary>
-        public int numberOfDefenders
-        {
-            get { return NumberOfDefenders; }
-            set
-            {
-                if (value == 1 | value == 2)
-                    NumberOfDefenders = value;
-            }
-        }
+        
 
 
 
@@ -192,11 +179,20 @@ namespace Risiko
         }
 
 
-
-        public int GetCountryIndex(string CountryName)
+        /// <summary>
+        /// Liefert Index des Landes mit Name CountryNameIn
+        /// </summary>
+        /// <param name="CountryNameIn"></param>
+        /// <returns></returns>
+        public int GetCountryIndex(string CountryNameIn)
         {
-
-            return 0;
+            for (int i = 0;ownedCountries.Length > i;++i)
+            {
+                if (ownedCountries[i].name == CountryNameIn)
+                    return i;
+            }
+            // error
+            return -1;
         }
     }
 }

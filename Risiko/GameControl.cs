@@ -12,7 +12,7 @@ using System.Windows.Forms;
 namespace Risiko
 {
     internal class GameControl
-    {    
+    {
         // Verbindung zu Main
         internal RisikoMain Main;
         // Spielfeld
@@ -35,6 +35,7 @@ namespace Risiko
         /// Aktueller Status, 0 Setzen der Spieler am Anfang des Spiels
         /// 1 setzen vor jeder Runde der Spieler
         /// 2 angreifen, 3 ziehen
+        /// Momentan eigentlich kein unterschied zwischen 0 und 1
         /// </summary>
         internal int GameState = -1;
         /// <summary>
@@ -68,15 +69,18 @@ namespace Risiko
         /// String Array aus Quelldatei
         /// </summary>
         internal string[] TxtSource;
-        
-        
+
+
         //ZufallszahlenGenerator
         Random rnd = new Random();
 
 
         //Einheiten
-        // Array der die Anzahl der Einheiten die der Spieler setzen möchte speichert
-        // in die Länder in seinem Besitz
+        /// <summary>
+        /// Array der die Anzahl der Einheiten die der Spieler setzen möchte speichert
+        /// in die Länder in seinem Besitz
+        /// Array.Length = field.countries.length -> unkomplizierter als spezifische ArrayLänge
+        /// </summary>
         internal int[] UnitsToAdd;
         public int[] unitsToAdd
         {
@@ -90,7 +94,7 @@ namespace Risiko
             get { return StartUnitAdding; }
             set { StartUnitAdding = value; }
         }
-        
+
 
         // ZUM ZEICHNEN
         // false wenn Karte noch gar nicht gezeichnet wurde
@@ -116,6 +120,21 @@ namespace Risiko
         internal int tempClickedScndIndex = -1;
         internal Color tempClickedScndCountryColor;
 
+        //ContinentTable
+        /// <summary>
+        /// Speichert die eigentlichen Farben der KontinentLänder
+        /// </summary>
+        internal Color[] tempMouseOverContinentLabelsColor;
+        /// <summary>
+        /// Speichert ob Labels bereits erzeugt worden sind
+        /// </summary>
+        internal bool ContinentLabelsCreated = false;
+        public bool continentLabelsCreated
+        {
+            get { return ContinentLabelsCreated; }
+            set { ContinentLabelsCreated = value; }
+        }
+
 
         // Faktor zum zeichnen
         internal int Factor;
@@ -123,13 +142,14 @@ namespace Risiko
         {
             get { return Factor; }
         }
-        
-        
+
+
         //Einstellungen
         internal bool AutoLanderkennung = true;
         public bool autoLanderkennung
         {
             get { return AutoLanderkennung; }
+            set { AutoLanderkennung = value; }
         }
 
         // Konstruktor
@@ -137,7 +157,7 @@ namespace Risiko
         {
             Main = MainIn;
         }
-        public GameControl(){}
+        public GameControl() { }
 
 
         //Karte zeichnen
@@ -163,12 +183,16 @@ namespace Risiko
             LoadCountriesFromTxtSource();
             //Kontinente aus QuellStringArray lesen
             LoadContinentsFromTxtSource();
+            //Kontinent-Tabelle lesen
+            LoadContinentsTableFromTxtSource();
 
             int[] WidthHeight = Main.GetMapData();
             CheckFactor(WidthHeight[0], WidthHeight[1]);
 
             // lässt Karte zeichnen
             Main.DrawMap();
+            // Lässt KontinentenTabelle erzeugen und direkt anpassen
+            ResizeContinentLabels();
 
             DrawnMap = true;
         }
@@ -183,8 +207,11 @@ namespace Risiko
             int[] WidthHeight = Main.GetMapData();
             CheckFactor(WidthHeight[0], WidthHeight[1]);
             // bei veränderung neu zeichnen TODO: DrawFlag ?? 
-            if(tempOldFactor != Factor)
+            if (tempOldFactor != Factor)
+            {
                 Main.DrawMap();
+                ResizeContinentLabels();
+            }
         }
         /// <summary>
         /// Zeichnet Land vollständig, mit MiddleUnits
@@ -193,8 +220,61 @@ namespace Risiko
         /// <param name="Index"></param>
         internal void DrawCountryFull(int Index)
         {
-            Main.DrawCountry(Index);
+            Main.DrawSingleCountry(Index);
             Main.DrawMiddleUnits(Index);
+            //Main.DrawCorners(Index);
+        }
+        /// <summary>
+        /// malt Land mit CountryIn Index markiert
+        /// </summary>
+        /// <param name="IndexIn"></param>
+        internal void DrawCountryFullSelected(int IndexIn)
+        {
+            Main.DrawSingleCountryMarked(IndexIn);
+            Main.DrawMiddleUnits(IndexIn);
+        }
+        /// <summary>
+        /// zeichnet gesamte Karte mithilfe von DrawCountryFull
+        /// </summary>
+        internal void DrawFullMap()
+        {
+            for (int i = 0; i < Field.countries.Length; ++i)
+            {
+                DrawCountryFull(i);
+            }
+        }
+        /// <summary>
+        /// Markiert ganzen Kontinent, mit Index ParameterIn
+        /// Speichert die eigentlichen Farben in tempMouseOverContinentLabelsColor
+        /// </summary>
+        /// <param name="ContinentIndexIn"></param>
+        public void MarkContinent(int ContinentIndexIn)
+        {
+            tempMouseOverContinentLabelsColor = new Color[Field.continents[ContinentIndexIn].numberOfCountries];
+
+            for (int i = 0; i < Field.countries.Length; ++i)
+            {
+                if (Field.countries[i].continent == ContinentIndexIn)
+                {
+                    DrawCountryFullSelected(i);
+                }
+            }
+        }
+        /// <summary>
+        /// Lädt die eigentlichen Farben der Länder eines 
+        /// Kontinents ContinentIndexIn und lässt Länder
+        /// zeichnen
+        /// </summary>
+        /// <param name="ContinentIndexIn"></param>
+        public void UnmarkContinent(int ContinentIndexIn)
+        {
+            for (int i = 0; i < Field.countries.Length; ++i)
+            {
+                if (Field.countries[i].continent == ContinentIndexIn)
+                {
+                    DrawCountryFull(i);
+                }
+            }
         }
 
         // "Datenbank", inzwischen TxtDatei
@@ -396,24 +476,195 @@ namespace Risiko
                 }
             }
         }
+        /// <summary>
+        /// Liest die StartPosition des KontinentenTabels aus TxtSource
+        /// </summary>
+        internal void LoadContinentsTableFromTxtSource()
+        {
+            if (TxtSource != null)
+            {
+                //StartIndex der Länder und Länge
+                int StartIndex = 0, Length = 0;
 
-        // Gamestate
+                // Eckpunkte auslesen
+                SearchForSpecialPartFromTxtSource(ref StartIndex, ref Length, TxtSource, "ContinentTable");
+                Point tempStartPosition = new Point();
+                string zeile = TxtSource[StartIndex];
+                //Tabs und Leerzeichen entfernen
+                zeile = zeile.Trim('\t', ' ');
+                // Zeile zerlegen
+                string[] Parts = zeile.Split('.');
+
+                // Eckpunkte des Landes auslesen, -> String wieder zerlegen
+                string[] Corners = Parts[0].Split(';');
+
+                tempStartPosition.X = Convert.ToInt32(Corners[0]);
+                tempStartPosition.Y = Convert.ToInt32(Corners[1]);
+
+                Field.firstContLabelPosition = tempStartPosition;
+            }
+        }
+        /// <summary>
+        /// Erzeugt die KontinentLabels
+        /// </summary>
+        internal void ResizeContinentLabels()
+        {
+            if (Main.lblContinents == null)
+                Main.CreateContinentLabels();
+            for (int i = 0; i < Field.continents.Length; ++i)
+            {
+                Main.lblContinents[i].Font = new Font(Main.lblContinents[i].Font.FontFamily, Factor);
+                Main.lblContinents[i].Location = new Point(Field.firstContLabelPosition.X * Factor,
+                                                            Field.firstContLabelPosition.Y * Factor + i * Factor * 2);
+                Main.lblContinents[i].Size = new Size(Factor * 13, Factor * 3);
+
+                //Main.lblContinents[i].BringToFront();
+            }
+        }
+
+        // Gamestate, Kontrolle
         /// <summary>
         /// Geht über zu nächstem GameState, falls Ende eines Zuges
         /// -> nächster Spieler
         /// </summary>
         public void nextGameState()
         {
-            if (++GameState > 3)
+            // "normale" Gamestates
+            if (GameState == 1)
+            {
+                GameState = 2;
+                Main.NegateVisibilityPB();
+                StartUnitAdding = false;
+                DrawFullMap();
+            }
+            else if (GameState == 2)
+            {
+                GameState = 3;
+                DrawFullMap();
+            }
+            else if (GameState == 3)
             {
                 GameState = 1;
-                int actualPlayer = ActualPlayerIndex() + 1;
-                if (actualPlayer >= Players.Length)
-                    actualPlayer = 0;
-                ActualPlayer = Players[actualPlayer];
-            } 
+                Main.NegateVisibilityPB();
+                StartUnitAdding = true;
+                DrawFullMap();
+                
+            }
+            else if (GameState == 0)
+            {
+                int PlayerIndex = ActualPlayerIndex();
+                // Letzter Spieler hat gesetzt
+                if (PlayerIndex == Players.Length-1)
+                {
+                    GameState = 1;
+                    ActualPlayer = Players[0];
+                    ActualPlayer.unitsPT = GetAddUnitsAtBeginningForActualPlayer();
+                }
+                // Noch ein Spieler muss setzen
+                else
+                {
+                    ActualPlayer = Players[++PlayerIndex];
+                }
+                Main.SetPBColor(ActualPlayer.playerColor);
+                Main.ActualizePB();
+                DrawFullMap();
+            }
+
+
+            // Old
+            //if (++GameState > 3)
+            //{
+            //    GameState = 1;
+            //    int actualPlayer = ActualPlayerIndex() + 1;
+            //    if (actualPlayer >= Players.Length)
+            //        actualPlayer = 0;
+            //    ActualPlayer = Players[actualPlayer];
+            //}
+            //if (GameState == 1)
+            //    startUnitAdding = true;
+            //else
+            //    startUnitAdding = false;
         }
 
+        public void MoveAttackSetEnd()
+        {
+            // "normale" Gamestates
+            if (GameState == 1 | GameState == 0)
+            {
+                // Keine Einheiten mehr zu setzen
+                if (ActualPlayer.unitsPT == 0)
+                {
+                    // Einheiten in Länder "verschieben"
+                    for (int i = 0; i < Field.countries.Length; ++i)
+                    {
+                        if (UnitsToAdd[i] != 0)
+                        {
+                            Field.countries[i].unitsStationed += UnitsToAdd[i];
+                            // Direkt danach mit 0 belegen für nächsten Spieler
+                            UnitsToAdd[i] = 0;
+                        }    
+                    }
+                    // Nächster Spieler
+                    nextGameState();
+                }
+                else
+                {
+                    // Fehlermeldung
+                    Main.ShowMessage("Sie haben noch Einheiten zu setzen.");
+                }
+            }
+            else if (GameState == 2)
+            {
+
+            }
+            else if (GameState == 3)
+            {
+
+            }
+        }
+
+        // Neues Spiel
+        /// <summary>
+        /// Startet neues Spiel
+        /// </summary>
+        /// <param name="Names"></param>
+        /// <param name="Colors"></param>
+        /// <param name="AI"></param>
+        public void StartNewGame(string[] Names, Color[] Colors, bool[] AI)
+        {
+            // Karte Zeichnen und dabei Laden
+            DrawAndLoadMap();
+            // prüfen ob alle arrays gleich lang sind
+            if (Names.Length != Colors.Length)
+                return;
+            // Players-Array erzeugen
+            Players = new Player[Names.Length];
+            //einzelne Player erzeugen
+            for (int i = 0; i < Names.Length; ++i)
+            {
+                Players[i] = new Player(Names[i], AI[i], Colors[i]);
+            }
+            // Länder verteilen
+            SpreadCountriesToPlayers();
+            // Karte mit neuen Länderfarben zeichnen
+            DrawFullMap();
+            // Gamestate festlegen
+            GameState = 0;
+            // UnitsToAdd-Array erstellen
+            UnitsToAdd = new int[Field.countries.Length];
+            // Zeigt an das das Einheiten-Setzen begonnen hat
+            StartUnitAdding = true;
+            // ActualPlayer festlegen
+            ActualPlayer = Players[0];
+
+            for (int i = 0;i <Players.Length;++i)
+            {
+                Players[i].unitsPT = 20;
+            }
+
+            Main.pBUnits.Maximum = actualPlayer.unitsPT;
+            Main.pBUnits.Value = actualPlayer.unitsPT;
+        }
 
         //Maus-Aktionen
         /// <summary>
@@ -429,10 +680,10 @@ namespace Risiko
                 int temp = CheckClickInCountry(new Point(e.X, e.Y));
 
                 // Kein Treffer
-                if (temp == -1 & tempMovedIndex != -1)//& tempOldIndex != tempIndex)
+                if (temp == -1 & tempMovedIndex != -1)
                 {
                     //kein Treffer
-                    Field.countries[tempMovedIndex].colorOfCountry = tempMovedCountryColor;
+                    //Field.countries[tempMovedIndex].colorOfCountry = tempMovedCountryColor;
 
                     DrawCountryFull(tempMovedIndex);
                     tempMovedIndex = -1;
@@ -443,16 +694,17 @@ namespace Risiko
                     //zuvor Bereits Land ausgewählt                
                     if (tempMovedIndex != -1)
                     {
-                        Field.countries[tempMovedIndex].colorOfCountry = tempMovedCountryColor;
+                        //Field.countries[tempMovedIndex].colorOfCountry = tempMovedCountryColor;
                         DrawCountryFull(tempMovedIndex);
                     }
 
-                    tempMovedCountryColor = Field.countries[temp].colorOfCountry;
-                    Field.countries[temp].colorOfCountry = ColorCountrySelected;
+                    //tempMovedCountryColor = Field.countries[temp].colorOfCountry;
+                    //Field.countries[temp].colorOfCountry = ColorCountrySelected;
 
                     tempMovedIndex = temp;
 
-                    DrawCountryFull(temp);
+                    //DrawCountryFull(temp);
+                    DrawCountryFullSelected(temp);
                 }
             }
         }
@@ -464,24 +716,15 @@ namespace Risiko
         public void MouseClicked(MouseEventArgs e)
         {
             int tempCountry = CheckClickInCountry(new Point(e.X, e.Y));
+            // Letzte Fehlermeldung löschen
+            Main.DeleteMessage();
+            if (GameState == 1 | GameState == 0)
+                MouseClickedAddUnit(tempCountry, e);
+            else if (GameState == 2)
+                MouseClickedAttackMode(tempCountry, e);
+            else if (GameState == 3)
+                ;// TODO: methode fürs ziehen
 
-            // Wenn Klick in Land und Linke Maustaste
-            if (tempCountry != -1 & e.Button == MouseButtons.Left)
-            {
-                if (GameState == 2)
-                    MouseClickedAttackMode(tempCountry);
-                else if (GameState == 3)
-                    ;// TODO: Methode fürs ziehen
-            }
-            else if (e.Button == MouseButtons.Right)
-            {
-                // Fst und Scnd werden resettet
-                ResetClickedCountries(3);
-            }
-            else if (tempCountry == -1)
-            {
-                // TODO: nur 1 clicked Land zurücksetzen, bei 2 scnd, bei 1 fst
-            }
         }
 
         /// <summary>
@@ -523,63 +766,152 @@ namespace Risiko
         /// <summary>
         /// bei Gamestate = 2, AngriffsModus, 2 Länder auswählbar
         /// 1 eigenes, 1 gegnerisches
+        /// Abfrage nach Buttons usw wird auch hier getätigt
         /// </summary>
-        /// <param name="tempCountry"></param>
-        public void MouseClickedAttackMode(int tempCountry)
+        /// <param name="tempCountryIn"></param>
+        public void MouseClickedAttackMode(int tempCountryIn, MouseEventArgs e)
         {
-            if (tempClickedFstIndex == -1)
+            // Linksklick in Land
+            if (tempCountryIn != -1 & e.Button == MouseButtons.Left)
             {
-                //eigenes Land
-                if (actualPlayer == Field.countries[tempCountry].owner)
+                if (tempClickedFstIndex == -1)
                 {
-                    // Index und Farbe abspeichern
-                    tempClickedFstCountryColor = Field.countries[tempCountry].colorOfCountry;
-                    tempClickedFstIndex = tempCountry;
-
-                    // Gelb machen
-                    Field.countries[tempClickedFstIndex].colorOfCountry = ColorCountrySelected;
-                    // zeichnen
-                    DrawCountryFull(tempClickedFstIndex);
-
-                    // TODO: TrackBar setzen
-                }
-                // Nicht eigenes Land
-                else
-                {
-                    Main.ShowMessage("Wählen Sie eines Ihrer eigenen Länder.");
-                    Main.timerDeleteMessage.Enabled = true;
-                }
-            }
-            // Zuvor schon Land angeklickt
-            else if (tempClickedFstIndex != -1)
-            {
-                // gegnerisches Land
-                if (actualPlayer != Field.countries[tempCountry].owner)
-                {
-                    // gegnerisches Nachbarland
-                    if (Field.CountriesAreNeighbours(tempClickedFstIndex, tempCountry))
+                    //eigenes Land
+                    if (actualPlayer == Field.countries[tempCountryIn].owner)
                     {
-                        //Index und Farbe abspeichern
-                        tempClickedScndIndex = tempCountry;
-                        tempClickedScndCountryColor = Field.countries[tempCountry].colorOfCountry;
+                        // Index und Farbe abspeichern
+                        tempClickedFstCountryColor = Field.countries[tempCountryIn].colorOfCountry;
+                        tempClickedFstIndex = tempCountryIn;
 
                         // Gelb machen
-                        Field.countries[tempClickedScndIndex].colorOfCountry = ColorCountrySelected;
+                        Field.countries[tempClickedFstIndex].colorOfCountry = ColorCountrySelected;
                         // zeichnen
-                        DrawCountryFull(tempClickedScndIndex);
+                        DrawCountryFull(tempClickedFstIndex);
                     }
-                    // zwar gegnerisches Land, jedoch kein Nachbar
+                    // Nicht eigenes Land
                     else
                     {
-                        Main.ShowMessage("Wählen Sie ein benachbartes gegnerisches Land.");
-                        Main.timerDeleteMessage.Enabled = true;
+                        Main.ShowMessage("Wählen Sie eines Ihrer eigenen Länder.");
                     }
                 }
-                // eigenes Land
+                // Zuvor schon Land angeklickt
+                else if (tempClickedFstIndex != -1)
+                {
+                    if (tempClickedScndIndex != -1 & tempClickedFstIndex != -1)
+                    {
+                        Main.ShowMessage("Sie können nicht mehr als 2 Länder auswählen.");
+                        return;
+                    }
+                    // gegnerisches Land
+                    if (actualPlayer != Field.countries[tempCountryIn].owner)
+                    {
+                        // gegnerisches Nachbarland
+                        if (Field.CountriesAreNeighbours(tempClickedFstIndex, tempCountryIn))
+                        {
+                            //Index und Farbe abspeichern
+                            tempClickedScndIndex = tempCountryIn;
+                            tempClickedScndCountryColor = Field.countries[tempCountryIn].colorOfCountry;
+
+                            // Gelb machen
+                            Field.countries[tempClickedScndIndex].colorOfCountry = ColorCountrySelected;
+                            // zeichnen
+                            DrawCountryFull(tempClickedScndIndex);
+
+                            // TODO: eigentlicher Attack
+                        }
+                        // zwar gegnerisches Land, jedoch kein Nachbar
+                        else
+                        {
+                            Main.ShowMessage("Wählen Sie ein benachbartes gegnerisches Land.");
+                        }
+                    }
+                    // eigenes Land
+                    else
+                    {
+                        Main.ShowMessage("Wählen Sie ein gegnerisches Land.");
+                    }
+                }
+            }
+            // Rechtsklick
+            else if (e.Button == MouseButtons.Right)
+            {
+                // Fst und Scnd werden resettet
+                int scnd = tempClickedScndIndex;
+                int fst = tempClickedFstIndex;
+                ResetClickedCountries(3);
+                DrawCountryFull(scnd);
+                DrawCountryFull(fst);
+            }
+            // Linksklick außerhalb des Landes
+            else if (tempCountryIn == -1 & e.Button == MouseButtons.Left)
+            {
+                if (tempClickedScndIndex != -1)
+                {
+                    int tempIndex = tempClickedScndIndex;
+                    ResetClickedCountries(2);
+                    DrawCountryFull(tempIndex);
+                }
+                else if (tempClickedScndIndex == -1 & tempClickedFstIndex != -1)
+                {
+                    int tempIndex = tempClickedFstIndex;
+                    ResetClickedCountries(1);
+                    DrawCountryFull(tempIndex);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Wird bei Klick auf pnlMap im Gamestate 1 oder 0 aufgerufen
+        /// </summary>
+        /// <param name="tempCountryIn"></param>
+        /// <param name="e"></param>
+        public void MouseClickedAddUnit(int tempCountryIn, MouseEventArgs e)
+        {
+            // Linksklick in Land
+            if (tempCountryIn != -1 & e.Button == MouseButtons.Left)
+            {
+                // Spieler ist Besitzer des Landes
+                if (Field.countries[tempCountryIn].owner == ActualPlayer)
+                {
+                    if (ActualPlayer.unitsPT > 0)
+                    {
+                        UnitsToAdd[tempCountryIn]++;
+                        ActualPlayer.unitsPT--;
+                        DrawCountryFullSelected(tempCountryIn);
+                        Main.ActualizePB();
+                    }
+                    else
+                    {
+                        Main.ShowMessage("Sie haben all ihre Einheiten bereits gesetzt.");
+                    }
+                }
+                // nicht eigenes Land
                 else
                 {
-                    Main.ShowMessage("Wählen Sie ein gegnerisches Land.");
-                    Main.timerDeleteMessage.Enabled = true;
+                    Main.ShowMessage("Wählen Sie eines ihrer eigenen Länder.");
+                }
+            }
+            else if (tempCountryIn != -1 & e.Button == MouseButtons.Right)
+            {
+                // Spieler ist Besitzer des Landes
+                if (Field.countries[tempCountryIn].owner == ActualPlayer)
+                {
+                    if (UnitsToAdd[tempCountryIn] > 0)
+                    {
+                        UnitsToAdd[tempCountryIn]--;
+                        ActualPlayer.unitsPT++;
+                        DrawCountryFullSelected(tempCountryIn);
+                        Main.ActualizePB();
+                    }
+                    else
+                    {
+                        Main.ShowMessage("Sie haben in diesem Land keine Einheiten mehr hinzugefügt.");
+                    }
+                }
+                // nicht eigenes Land
+                else
+                {
+                    Main.ShowMessage("Wählen Sie eines ihrer eigenen Länder.");
                 }
             }
         }
@@ -588,20 +920,111 @@ namespace Risiko
 
 
         // Sonstiges
+        private int GetAddUnitsAtBeginningForActualPlayer()
+        {
+            return ((int)(ActualPlayer.ownedCountries.Length / 3) + GetAddUnitsFromContsForActualPlayer());
+        }
+
         /// <summary>
         /// Liefert Index des aktuellen Spielers in Players-Array
         /// </summary>
         /// <returns></returns>
         internal int ActualPlayerIndex()
         {
-            for (int i = 0;i < Players.Length;++i)
+            for (int i = 0; i < Players.Length; ++i)
             {
                 if (Players[i].name == ActualPlayer.name)
                     return i;
             }
             return -1;
         }
-        
+
+        /// <summary>
+        /// Verteilt die Länder an die Spieler, zufallsgeneriert
+        /// TODO: Option Länder selbst auswählen, abwechselnd Einheit in verfügbares Land setzen
+        /// </summary>
+        public void SpreadCountriesToPlayers()
+        {
+            Random rnd = new Random();
+            // Speichert temporär die Anzahl der Länder die der Spieler
+            // bereits besitzt
+            int[] CounterOfCountries = new int[players.Length];
+
+            // Die Anzahl der Länder die jeder Spieler mindestens bekommt
+            int CountriesEachPlayer = Field.countries.Length / players.Length;
+
+            // Anzahl der "mindest" länder setzen
+            for (int i = 0; i < players.Length; ++i)
+                CounterOfCountries[i] = CountriesEachPlayer;
+
+            // Die Anzahl der Länder die "zu viel" sind, die also
+            // Spielern zusätzlich zugeteilt werden
+            // TODO: "Echte" Spieler vlt bevorzugen (nicht KI)
+            int CountriesLeft = Field.countries.Length - (CountriesEachPlayer * players.Length);
+
+            // Zufallsvariable
+            int tempRnd;
+
+            // Gibt zufällig manchen Spielern mehr Länder (die die zu viel waren)
+            while (CountriesLeft > 0)
+            {
+                tempRnd = (int)rnd.NextDouble() * players.Length;
+                if (CounterOfCountries[tempRnd] == CountriesEachPlayer)
+                {
+                    CounterOfCountries[tempRnd]++;
+                    CountriesLeft--;
+                }
+            }
+
+            // Gibt den Spielern die Länder
+            for (int i = 0; i < Field.countries.Length; i++)
+            {
+                tempRnd = (int)(rnd.NextDouble() * players.Length);
+                if (CounterOfCountries[tempRnd] > 0)
+                {
+                    // Country- Besitzer festlegen
+                    Field.countries[i].owner = Players[tempRnd];
+                    // Anzahl der Länder für neuen Besitzer die noch zu vergeben sind verringern
+                    CounterOfCountries[tempRnd]--;
+                    // 1 Einheit in Land setzen
+                    Field.countries[i].unitsStationed = 1;
+                    // 1 Einheit bei Spieler abziehen
+                    Players[tempRnd].unitsPT--;
+                }
+                else
+                    --i;
+                // damit land sicher vergeben wird
+            }
+
+            // Farbe des Spielers in Land übernehmen
+            for (int i = 0; i < Field.countries.Length; ++i)
+            {
+                Field.countries[i].colorOfCountry = Field.countries[i].owner.playerColor;
+            }
+
+            // Besitz der Länder in ownedCountries der Spieler speichern, (2seitige Beziehung) TODO: unnötig?
+            for (int i = 0; i < Field.countries.Length; ++i)
+            {
+                players[GetPlayerIndex(Field.countries[i].owner.name)].AddOwnedCountry(Field.countries[i]);
+            }
+        }
+
+        /// <summary>
+        /// Liefert Index aus Players[] des Spielers mit NameIn zurück
+        /// </summary>
+        /// <param name="NameIn"></param>
+        /// <returns></returns>
+        private int GetPlayerIndex(string NameIn)
+        {
+            for (int i = 0; i < Players.Length; ++i)
+            {
+                if (Players[i].name == NameIn)
+                    return i;
+            }
+            // error
+            return -1;
+        }
+
         /// <summary>
         /// Fügt String, an Stringarray an
         /// und gibt erweiterten Array zurück
@@ -611,35 +1034,35 @@ namespace Risiko
         /// <returns></returns>
         internal string[] AddStringToStringArray(string ToAdd, string[] StringArray)
         {
-            string[] OutBuf = new string[StringArray.Length+1];
-            for (int i = 0;i < StringArray.Length;++i)
+            string[] OutBuf = new string[StringArray.Length + 1];
+            for (int i = 0; i < StringArray.Length; ++i)
             {
                 OutBuf[i] = StringArray[i];
             }
             OutBuf[StringArray.Length] = ToAdd;
             return OutBuf;
         }
-        
+
         /// <summary>
         /// Liefert die zusätzlichen Einheiten eines Spielers von Kontinenten zurück
         /// </summary>
         /// <returns></returns>
-        public int GiveAddUnitsFromContsForActualPlayer()
+        public int GetAddUnitsFromContsForActualPlayer()
         {
             int OutBuff = 0;
 
             int[] CountriesOfContsOfPlayer = new int[Field.continents.Length];
-            for (int i = 0;i < CountriesOfContsOfPlayer.Length;++i)
+            for (int i = 0; i < CountriesOfContsOfPlayer.Length; ++i)
             {
                 CountriesOfContsOfPlayer[i] = 0;
             }
-                
+
             for (int i = 0; i < ActualPlayer.ownedCountries.Length; ++i)
             {
                 CountriesOfContsOfPlayer[ActualPlayer.ownedCountries[i].continent]++;
             }
 
-            for (int i = 0;i < Field.continents.Length;++i)
+            for (int i = 0; i < Field.continents.Length; ++i)
             {
                 if (Field.continents[i].numberOfCountries == CountriesOfContsOfPlayer[i])
                     OutBuff += Field.continents[i].AdditionalUnits;
@@ -1035,11 +1458,11 @@ namespace Risiko
         //        Field.countries[Counter].neighbouringCountries = tempNeighbouringCountries;
         //        Counter++;
         //    }
-        /// <summary>
-        /// Zählt Einträge zwischen Start und End, ab StartIndex
-        /// </summary>
-        /// <param name="Txt"></param>
-        /// <returns></returns>
+        ///// <summary>
+        ///// Zählt Einträge zwischen Start und End, ab StartIndex
+        ///// </summary>
+        ///// <param name="Txt"></param>
+        ///// <returns></returns>
         //internal int LoadNumberOfEntriesFromStrings(string[] Txt, int StartingIndex)
         //{
         //    int EntryCounter = 0;
@@ -1055,13 +1478,52 @@ namespace Risiko
         //        if (StartetCounting)
         //            EntryCounter++;
         //    }
-
         //    return EntryCounter;
         //}
         //    // Ende,  streamreader schließen, kappt Verbindung zur Txt-Datei
         //    sr.Close();
         //}
-
-
+        // Alter Teil von MouseClicked
+        // OLD
+        // Wenn Klick in Land und Linke Maustaste
+        //if (tempCountry != -1 & e.Button == MouseButtons.Left)
+        //{
+        //    if (GameState == 2)
+        //        MouseClickedAttackMode(tempCountry, e);
+        //    else if (GameState == 3)
+        //        ;// 
+        //    else if (GameState == 0 | GameState == 1)
+        //        MouseClickedAddUnit(tempCountry);
+        //}
+        //else if (e.Button == MouseButtons.Right)
+        //{
+        //    if (GameState == 2 | GameState == 3)
+        //    {
+        //        // Fst und Scnd werden resettet
+        //        int scnd = tempClickedScndIndex;
+        //        int fst = tempClickedFstIndex;
+        //        ResetClickedCountries(3);
+        //        DrawCountryFull(scnd);
+        //        DrawCountryFull(fst);
+        //    }
+        //}
+        //else if (tempCountry == -1 & e.Button == MouseButtons.Left)
+        //{
+        //    if (GameState == 2)
+        //    {
+        //        if (tempClickedScndIndex != -1)
+        //        {
+        //            int tempIndex = tempClickedScndIndex;
+        //            ResetClickedCountries(2);
+        //            DrawCountryFull(tempIndex);
+        //        }
+        //        else if (tempClickedScndIndex == -1 & tempClickedFstIndex != -1)
+        //        {
+        //            int tempIndex = tempClickedFstIndex;
+        //            ResetClickedCountries(1);
+        //            DrawCountryFull(tempIndex);
+        //        }
+        //    }
+        //}
     }
 }

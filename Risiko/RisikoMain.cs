@@ -9,6 +9,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Windows;
+using MySql.Data.MySqlClient;
+
 
 namespace Risiko
 {
@@ -19,7 +21,10 @@ namespace Risiko
         internal Graphics z;
         internal Pen stift;  
 
-        // Control
+        //Während Laufzeit erstellte Labels
+        internal Label[] lblContinents;
+
+        // Control, Steuerung
         internal GameControl Control;
         internal GameControl control
         {
@@ -45,57 +50,53 @@ namespace Risiko
 
 
             // Design
+            // Buttons
             btnDrawMap.FlatStyle = FlatStyle.Flat;
             btnDrawMap.FlatAppearance.BorderColor = Color.White;
-            btnDrawMap.FlatAppearance.BorderSize = 1;
+            btnDrawMap.FlatAppearance.BorderSize = 0;
 
-            btnEndMove.FlatStyle = FlatStyle.Flat;
-            btnEndMove.FlatAppearance.BorderColor = Color.White;
-            btnEndMove.FlatAppearance.BorderSize = 1;
+            btnEndMoveAttack.FlatStyle = FlatStyle.Flat;
+            btnEndMoveAttack.FlatAppearance.BorderSize = 0;
 
-            btnTest.FlatStyle = FlatStyle.Flat;
-            btnTest.FlatAppearance.BorderColor = Color.White;
-            btnTest.FlatAppearance.BorderSize = 1;
+            btnTest1.FlatStyle = FlatStyle.Flat;
+            btnTest1.FlatAppearance.BorderSize = 0;
 
             btnOptions.FlatStyle = FlatStyle.Flat;
-            btnOptions.FlatAppearance.BorderColor = Color.White;
-            btnOptions.FlatAppearance.BorderSize = 1;
+            btnOptions.FlatAppearance.BorderSize = 0;
 
-            
+            // ProgressBar
+            pBUnits.Minimum = 0;
+            pBUnits.Step = 1;
+            pBUnits.BorderStyle = BorderStyle.None;
+
+            // Rote schrift im Message label -> bessere Sichtbarkeit
+            lblMessage.ForeColor = Color.Red;
         }
 
-        internal void btnTest_Click(object sender, EventArgs e)
-        {
-            
-        }
 
+        // KlickEreignisse
         internal void btnDrawMap_Click(object sender, EventArgs e)
         {
             Control.DrawMap();
         }
 
+        private void btnEndMove_Click(object sender, EventArgs e)
+        {
+            Control.MoveAttackSetEnd();
+        }
+
+        internal void btnOptions_Click(object sender, EventArgs e)
+        {
+            RisikoAttackOptions Opt = new RisikoAttackOptions(this);
+            Opt.Show();
+        }
         
-
-        /// <summary>
-        /// Liefert Höhe und Breite von pnlMap,
-        /// </summary>
-        /// <returns></returns>
-        public int[] GetMapData()
-        {
-            int[] data = new int[2];
-            data[0] = pnlMap.Width;
-            data[1] = pnlMap.Height;
-            return data;
-        }
-
-        internal void ResizeMap(object sender, EventArgs e)
-        {
-            Control.DrawMap();
-        }
-
         internal void einstellungenToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            //TODO: Open PropertiesForm -> machen
+            if (Control.autoLanderkennung)
+                Control.autoLanderkennung = false;
+            else
+                Control.autoLanderkennung = true;
         }
 
         //          !!!         Maussteuerung       !!!
@@ -115,6 +116,12 @@ namespace Risiko
         }
 
 
+        private void btnOptions_MouseEnter(object sender, EventArgs e)
+        {
+            RisikoAttackOptions Opt = new RisikoAttackOptions(this);
+            Opt.Show();
+        }
+
         // zeichnen
         /// <summary>
         /// Legt pnlMap background fest
@@ -125,7 +132,7 @@ namespace Risiko
             z_asBitmap = new Bitmap(pnlMap.Width, pnlMap.Height);
             z = Graphics.FromImage(z_asBitmap);
             
-
+            // Länder zeichnen
             for (int i = 0; i < Control.field.numberOfCountries; ++i)
             {
                 Point[] tempPoints = Control.field.GiveCountry(i).corners;
@@ -141,7 +148,9 @@ namespace Risiko
                 z.FillPolygon(tempObjectbrush, realPoints);
                 z.DrawPolygon(stift, realPoints);
             }
+            
 
+            // Karte festlegen
             pnlMap.BackgroundImage = z_asBitmap;
         }
 
@@ -151,7 +160,7 @@ namespace Risiko
         /// -> kein Flackern
         /// </summary>
         /// <param name="IndexIn">Index des Landes</param>
-        public void DrawCountry(int IndexIn)
+        public void DrawSingleCountry(int IndexIn)
         {
             // Zeichnet Land einfarbig, in Farbe des besitzenden Spielers
             Graphics temp;
@@ -167,6 +176,30 @@ namespace Risiko
             }
 
             SolidBrush tempObjectbrush = new SolidBrush(Control.field.GiveCountry(IndexIn).colorOfCountry);
+            temp.FillPolygon(tempObjectbrush, realPoints);
+            temp.DrawPolygon(stift, realPoints);
+        }
+
+        /// <summary>
+        /// Zeichnet Land mit Index IndexIn markiert
+        /// </summary>
+        /// <param name="IndexIn"></param>
+        public void DrawSingleCountryMarked(int IndexIn)
+        {
+            // Zeichnet Land einfarbig, in Farbe des besitzenden Spielers
+            Graphics temp;
+            temp = pnlMap.CreateGraphics();
+
+            Point[] tempPoints = Control.field.GiveCountry(IndexIn).corners;
+            Point[] realPoints = new Point[Control.field.GiveCountry(IndexIn).corners.Length];
+
+            for (int i = 0; i < realPoints.Length; ++i)
+            {
+                realPoints[i].X = (tempPoints[i].X * Control.factor);
+                realPoints[i].Y = (tempPoints[i].Y * Control.factor);
+            }
+
+            SolidBrush tempObjectbrush = new SolidBrush(Control.ColorCountrySelected);
             temp.FillPolygon(tempObjectbrush, realPoints);
             temp.DrawPolygon(stift, realPoints);
         }
@@ -211,11 +244,18 @@ namespace Risiko
 
             //zum schreiben
             Font f = new Font("Arial", 10);
-            SolidBrush tempObjectbrush = new SolidBrush(Color.White);
+            SolidBrush tempObjectbrush = new SolidBrush(Color.Black);
 
             // -5 magic, TODO: Verbessern, passt nicht immer (nicht immer in der Mitte -> zweistellig usw.)
             temp.DrawString(
                 Convert.ToString(Control.field.countries[Country].unitsStationed), f, tempObjectbrush, Middle.X - 5, Middle.Y - 5);
+
+            if (Control.startUnitAdding && Control.unitsToAdd != null && Control.unitsToAdd[Country] != 0)
+            {
+                tempObjectbrush = new SolidBrush(Color.Green);
+                temp.DrawString(
+                "+" + Convert.ToString(Control.unitsToAdd[Country]), f, tempObjectbrush, Middle.X +10, Middle.Y - 5);
+            }
         }
 
         /// <summary>
@@ -282,25 +322,72 @@ namespace Risiko
             }
         }
 
+ 
 
-        internal void pnlMap_Paint(object sender, PaintEventArgs e)
+        /// <summary>
+        /// Liefert Höhe und Breite von pnlMap,
+        /// </summary>
+        /// <returns></returns>
+        public int[] GetMapData()
         {
-
+            int[] data = new int[2];
+            data[0] = pnlMap.Width;
+            data[1] = pnlMap.Height;
+            return data;
         }
 
-        internal void trackBar_Scroll(object sender, EventArgs e)
+        internal void ResizeMap(object sender, EventArgs e)
         {
-
-        }
-
-        internal void btnOptions_Click(object sender, EventArgs e)
-        {
-            RisikoAttackOptions Opt = new RisikoAttackOptions(this);
-            Opt.Show();
+            Control.DrawMap();
         }
 
 
+        
 
+        // KontinenteLabel + EreignisMethoden
+        /// <summary>
+        /// Erzeugt die Label der Kontinente
+        /// </summary>
+        public void CreateContinentLabels()
+        {
+            lblContinents = new Label[Control.field.continents.Length];
+            for (int i = 0;i < Control.field.continents.Length;++i)
+            {
+                lblContinents[i] = new Label();
+                lblContinents[i].Location = new Point(Control.field.firstContLabelPosition.X * Control.factor,
+                                                Control.field.firstContLabelPosition.Y * Control.factor + i*15);
+                lblContinents[i].Size = new Size(100, 13);
+                lblContinents[i].BackColor = Color.Transparent;
+                lblContinents[i].Text = Control.field.continents[i].nameOfContinent + ":\t" +
+                                 Control.field.continents[i].additionalUnits;
+
+                lblContinents[i].MouseEnter += new EventHandler(lblContinent_MouseEnter);
+                lblContinents[i].MouseLeave += new EventHandler(lblContinent_MouseLeave);
+
+                Controls.Add(lblContinents[i]);
+                lblContinents[i].BringToFront();
+            }
+        }
+
+        // EreignisMethoden der lblContinents, Enter und Leave
+        internal void lblContinent_MouseEnter(object sender, EventArgs e)
+        {
+            Label senderLbl = sender as Label;
+            string[] Text = senderLbl.Text.Split(':');
+
+            int ContinentIndex = Control.field.GiveContinentIndex(Text[0]);
+
+            Control.MarkContinent(ContinentIndex);
+        }
+        internal void lblContinent_MouseLeave(object sender, EventArgs e)
+        {
+            Label senderLbl = sender as Label;
+            string[] Text = senderLbl.Text.Split(':');
+
+            int ContinentIndex = Control.field.GiveContinentIndex(Text[0]);
+
+            Control.UnmarkContinent(ContinentIndex);
+        }
 
 
         // Sonstiges
@@ -309,14 +396,10 @@ namespace Risiko
             return new Point(Location.X + btnOptions.Location.X + 8, Location.Y + btnOptions.Location.Y + 29);
         }
 
-        internal Player GiveActualPlayer()
-        {
-            return Control.actualPlayer;
-        }
-
         public void ShowMessage(string Message)
         {
             lblMessage.Text = Message;
+            timerDeleteMessage.Enabled = true;
         }
 
         public void DeleteMessage()
@@ -330,11 +413,73 @@ namespace Risiko
             timerDeleteMessage.Enabled = false;
         }
 
-
-        private void btnOptions_MouseEnter(object sender, EventArgs e)
+        /// <summary>
+        /// Eigentlich nicht benötigt
+        /// </summary>
+        public void RemoveContinentsLabels()
         {
-            RisikoAttackOptions Opt = new RisikoAttackOptions(this);
-            Opt.ShowDialog();
+            for (int i = 0; i < Control.field.continents.Length; ++i)
+            {
+                Controls.Remove(lblContinents[i]);
+            }
         }
+
+        private void btnTest2_Click(object sender, EventArgs e)
+        {
+            
+        }
+
+        internal void btnTest_Click(object sender, EventArgs e)
+        {
+            // neues Spiel
+            string[] name = {"Peter", "Hans"};
+            Color[] color = {Color.FromArgb(0xEE, 0x2C, 0x2C), Color.FromArgb(0x54, 0x8B, 0x54)};
+            bool[] ai = {false, false};
+            Control.StartNewGame(name, color, ai);
+            string i = Control.Players[0].name;
+        }
+
+        /// <summary>
+        /// Aktualisiert Progressbar
+        /// </summary>
+        public void ActualizePB()
+        {
+            pBUnits.Value = Control.actualPlayer.unitsPT;
+        }
+
+        public void NegateVisibilityPB()
+        {
+            pBUnits.Visible = !pBUnits.Visible;
+        }
+
+        public void SetPBColor(Color ColorIn)
+        {
+            pBUnits.MainColor = ColorIn;
+        }
+
+        //Old
+        //// KontinentTabelle zeichnen
+        //    Point[] Corners = Control.field.tableCorners;
+        //    for (int i = 0;i < Corners.Length;++i)
+        //    {
+        //        Corners[i].X *= Control.factor;
+        //        Corners[i].Y *= Control.factor;
+        //    }
+        //    stift.Width = 2;
+        //    z.DrawPolygon(stift, Corners);
+        //    stift.Width = 1;
+
+        //    // KontinentTabelle ausfüllen
+        //    //zum schreiben
+        //    Font f = new Font("Arial", 10);
+        //    SolidBrush tempWritingBrush = new SolidBrush(Color.Black);
+
+        //    Point StartPoint = new Point(Corners[0].X + 10, Corners[0].Y + 10);
+        //    for (int i = 0; i < Control.field.continents.Length; ++i )
+        //    {
+        //        z.DrawString(
+        //        Control.field.continents[i].nameOfContinent + ":\t" + Control.field.continents[i].additionalUnits, f, tempWritingBrush, StartPoint);
+        //        StartPoint.Y += 20;
+        //    }
     }
 }

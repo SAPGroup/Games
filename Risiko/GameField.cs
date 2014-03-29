@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -39,11 +40,6 @@ namespace Risiko
             set { Continents = value; }
         }
         
-
-        
-
-     
-
         /// <summary>
         /// Länder des Spielfelds
         /// </summary>
@@ -54,9 +50,32 @@ namespace Risiko
             set { Countries = value; }
         }
 
+        /// <summary>
+        /// Start-Location des ersten Continent-Labels
+        /// </summary>
+        private Point FirstContLabelPosition;
+        public Point firstContLabelPosition
+        {
+            get { return FirstContLabelPosition; }
+            set { FirstContLabelPosition = value; }
+        }
+        
+
+
+        // Sonstiges
         public Country GiveCountry(int i)
         {
             return Countries[i];
+        }
+
+        public int GiveContinentIndex(string NameIn)
+        {
+            for (int i = 0;i < Continents.Length;++i)
+            {
+                if (Continents[i].nameOfContinent == NameIn)
+                    return i;
+            }
+            return -1;
         }
 
         public bool CountriesAreNeighbours(int C1, int C2)
