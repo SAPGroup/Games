@@ -31,8 +31,13 @@
             this.rBCustomAttackers = new System.Windows.Forms.RadioButton();
             this.rB3EveryTime = new System.Windows.Forms.RadioButton();
             this.timerClose = new System.Windows.Forms.Timer(this.components);
+            this.cBStopAttacking = new System.Windows.Forms.CheckBox();
+            this.lblTextStopAttacking1 = new System.Windows.Forms.Label();
+            this.numUDStopPercentage = new System.Windows.Forms.NumericUpDown();
+            this.lblTextStopAttacking0 = new System.Windows.Forms.Label();
             this.gBAttackersOptions.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numUDCustomAttackers)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numUDStopPercentage)).BeginInit();
             this.SuspendLayout();
             // 
             // rBAllMen
@@ -45,6 +50,7 @@
             this.rBAllMen.TabStop = true;
             this.rBAllMen.Text = "Bis zum Tod";
             this.rBAllMen.UseVisualStyleBackColor = true;
+            this.rBAllMen.CheckedChanged += new System.EventHandler(this.rBAllMen_CheckedChanged);
             // 
             // gBAttackersOptions
             // 
@@ -96,12 +102,51 @@
             this.timerClose.Interval = 2000;
             this.timerClose.Tick += new System.EventHandler(this.timerClose_Tick);
             // 
+            // cBStopAttacking
+            // 
+            this.cBStopAttacking.AutoSize = true;
+            this.cBStopAttacking.Location = new System.Drawing.Point(12, 113);
+            this.cBStopAttacking.Name = "cBStopAttacking";
+            this.cBStopAttacking.Size = new System.Drawing.Size(15, 14);
+            this.cBStopAttacking.TabIndex = 2;
+            this.cBStopAttacking.UseVisualStyleBackColor = true;
+            this.cBStopAttacking.CheckedChanged += new System.EventHandler(this.cBStopAttacking_CheckedChanged);
+            // 
+            // lblTextStopAttacking1
+            // 
+            this.lblTextStopAttacking1.AutoSize = true;
+            this.lblTextStopAttacking1.Location = new System.Drawing.Point(81, 138);
+            this.lblTextStopAttacking1.Name = "lblTextStopAttacking1";
+            this.lblTextStopAttacking1.Size = new System.Drawing.Size(198, 13);
+            this.lblTextStopAttacking1.TabIndex = 3;
+            this.lblTextStopAttacking1.Text = "% der Einheiten vom Anfang des Angriffs";
+            // 
+            // numUDStopPercentage
+            // 
+            this.numUDStopPercentage.Location = new System.Drawing.Point(32, 136);
+            this.numUDStopPercentage.Name = "numUDStopPercentage";
+            this.numUDStopPercentage.Size = new System.Drawing.Size(43, 20);
+            this.numUDStopPercentage.TabIndex = 4;
+            // 
+            // lblTextStopAttacking0
+            // 
+            this.lblTextStopAttacking0.AutoSize = true;
+            this.lblTextStopAttacking0.Location = new System.Drawing.Point(34, 114);
+            this.lblTextStopAttacking0.Name = "lblTextStopAttacking0";
+            this.lblTextStopAttacking0.Size = new System.Drawing.Size(176, 13);
+            this.lblTextStopAttacking0.TabIndex = 5;
+            this.lblTextStopAttacking0.Text = "Angriff unterbrechen bei weniger als";
+            // 
             // RisikoAttackOptions
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(56)))), ((int)(((byte)(56)))), ((int)(((byte)(56)))));
-            this.ClientSize = new System.Drawing.Size(242, 239);
+            this.ClientSize = new System.Drawing.Size(285, 194);
+            this.Controls.Add(this.lblTextStopAttacking0);
+            this.Controls.Add(this.numUDStopPercentage);
+            this.Controls.Add(this.lblTextStopAttacking1);
+            this.Controls.Add(this.cBStopAttacking);
             this.Controls.Add(this.gBAttackersOptions);
             this.ForeColor = System.Drawing.Color.White;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
@@ -115,7 +160,9 @@
             this.gBAttackersOptions.ResumeLayout(false);
             this.gBAttackersOptions.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numUDCustomAttackers)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numUDStopPercentage)).EndInit();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -128,6 +175,10 @@
         internal System.Windows.Forms.RadioButton rB3EveryTime;
         private System.Windows.Forms.Timer timerClose;
         private System.ComponentModel.IContainer components;
+        private System.Windows.Forms.CheckBox cBStopAttacking;
+        private System.Windows.Forms.Label lblTextStopAttacking1;
+        private System.Windows.Forms.NumericUpDown numUDStopPercentage;
+        private System.Windows.Forms.Label lblTextStopAttacking0;
 
     }
 }

@@ -39,6 +39,7 @@
             this.btnTest2 = new System.Windows.Forms.Button();
             this.pBUnits = new ExtendedDotNET.Controls.Progress.ProgressBar();
             this.pnlMap = new Risiko.DoubleBufferedPanel();
+            this.timerAttack = new System.Windows.Forms.Timer(this.components);
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -163,6 +164,7 @@
             // pBUnits
             // 
             this.pBUnits.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.pBUnits.BackColor = System.Drawing.Color.White;
             this.pBUnits.BarOffset = 1;
             this.pBUnits.Caption = "Progress";
             this.pBUnits.CaptionColor = System.Drawing.Color.Black;
@@ -194,7 +196,7 @@
             this.pBUnits.Step = 1;
             this.pBUnits.TabIndex = 9;
             this.pBUnits.TextAntialias = true;
-            this.pBUnits.Value = 33;
+            this.pBUnits.Value = 100;
             // 
             // pnlMap
             // 
@@ -210,6 +212,10 @@
             this.pnlMap.MouseClick += new System.Windows.Forms.MouseEventHandler(this.pnlMap_MouseClick);
             this.pnlMap.MouseMove += new System.Windows.Forms.MouseEventHandler(this.pnlMap_MouseMove);
             this.pnlMap.Resize += new System.EventHandler(this.ResizeMap);
+            // 
+            // timerAttack
+            // 
+            this.timerAttack.Interval = 1000;
             // 
             // RisikoMain
             // 
@@ -255,6 +261,7 @@
         internal System.Windows.Forms.Button btnTest2;
         private System.ComponentModel.IContainer components;
         internal ExtendedDotNET.Controls.Progress.ProgressBar pBUnits;
+        private System.Windows.Forms.Timer timerAttack;
     }
 }
 

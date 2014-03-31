@@ -68,6 +68,11 @@ namespace Risiko
             return Countries[i];
         }
 
+        /// <summary>
+        /// Gibt den Namen eines Continents zurück
+        /// </summary>
+        /// <param name="NameIn"></param>
+        /// <returns></returns>
         public int GiveContinentIndex(string NameIn)
         {
             for (int i = 0;i < Continents.Length;++i)
@@ -78,6 +83,12 @@ namespace Risiko
             return -1;
         }
 
+        /// <summary>
+        /// Liefert zurück ob C1 und C2 nachbarn sind oder nich
+        /// </summary>
+        /// <param name="C1"></param>
+        /// <param name="C2"></param>
+        /// <returns></returns>
         public bool CountriesAreNeighbours(int C1, int C2)
         {
             string C2Name = Countries[C2].name;
@@ -88,6 +99,42 @@ namespace Risiko
             }
 
             return false;
+        }
+
+        public bool CountriesAreNeighbours(string Name1, string Name2)
+        {
+            for (int i = 0;i < Countries.Length;++i)
+            {
+                if (Countries[i].name == Name1)
+                {
+                    for (int j = 0;j < Countries[i].neighbouringCountries.Length;++j)
+                    {
+                        if (Countries[i].neighbouringCountries[j] == Name2)
+                            return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        public int GetCountryIndexFromName(string NameIn)
+        {
+            for (int i = 0;i < Countries.Length;++i)
+            {
+                if (Countries[i].name == NameIn)
+                    return i;
+            }
+            return -1;
+        }
+
+        public Country GetCountryFromName(string NameIn)
+        {
+            for (int i = 0; i < Countries.Length; ++i)
+            {
+                if (Countries[i].name == NameIn)
+                    return Countries[i];
+            }
+            return null;
         }
     }
 }

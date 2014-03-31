@@ -93,12 +93,27 @@ namespace Risiko
         //Einstellungen
         /// <summary>
         /// Legt Angriffseinstellungen des Spielers fest
-        /// 0: alle
-        /// 1: immer 3
-        /// 2: Anzahl
+        /// -1: alle
+        ///  0: immer 3
+        /// >0: Anzahl
         /// </summary>
         internal int SettingAttack;
-
+        public int settingAttack
+        {
+            get { return SettingAttack; }
+            set { SettingAttack = value; }
+        }
+        /// <summary>
+        /// Beendigung des Angriffs bei Verlust eines Prozentanteils
+        /// 0 : keine warnung
+        /// >0: Prozentzahl
+        /// </summary>
+        internal int SettingEndAttackLossPercentage;
+        public int settingEndAttackLossPercentage
+        {
+            get { return SettingEndAttackLossPercentage; }
+            set { SettingEndAttackLossPercentage = value; }
+        }
 
         // Konstruktoren
         /// <summary>

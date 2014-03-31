@@ -19,7 +19,7 @@ namespace Risiko
         //
         internal Bitmap z_asBitmap;                                              //Bilddatei der Graphic z
         internal Graphics z;
-        internal Pen stift;  
+        internal Pen stift;
 
         //Während Laufzeit erstellte Labels
         internal Label[] lblContinents;
@@ -82,7 +82,7 @@ namespace Risiko
 
         private void btnEndMove_Click(object sender, EventArgs e)
         {
-            Control.MoveAttackSetEnd();
+            Control.ButtonMoveAttackSetEnd();
         }
 
         internal void btnOptions_Click(object sender, EventArgs e)
@@ -90,7 +90,7 @@ namespace Risiko
             RisikoAttackOptions Opt = new RisikoAttackOptions(this);
             Opt.Show();
         }
-        
+
         internal void einstellungenToolStripMenuItem1_Click(object sender, EventArgs e)
         {
             if (Control.autoLanderkennung)
@@ -131,7 +131,7 @@ namespace Risiko
         {
             z_asBitmap = new Bitmap(pnlMap.Width, pnlMap.Height);
             z = Graphics.FromImage(z_asBitmap);
-            
+
             // Länder zeichnen
             for (int i = 0; i < Control.field.numberOfCountries; ++i)
             {
@@ -148,7 +148,7 @@ namespace Risiko
                 z.FillPolygon(tempObjectbrush, realPoints);
                 z.DrawPolygon(stift, realPoints);
             }
-            
+
 
             // Karte festlegen
             pnlMap.BackgroundImage = z_asBitmap;
@@ -254,7 +254,7 @@ namespace Risiko
             {
                 tempObjectbrush = new SolidBrush(Color.Green);
                 temp.DrawString(
-                "+" + Convert.ToString(Control.unitsToAdd[Country]), f, tempObjectbrush, Middle.X +10, Middle.Y - 5);
+                "+" + Convert.ToString(Control.unitsToAdd[Country]), f, tempObjectbrush, Middle.X + 10, Middle.Y - 5);
             }
         }
 
@@ -284,12 +284,12 @@ namespace Risiko
             // Innere Eckpunkte
             Point Middle = Control.GetMiddleOfPolygon(realPoints);
             Point[] InnerPoly = new Point[realPoints.Length];
-            for (int i = 0;i < realPoints.Length;++i)
+            for (int i = 0; i < realPoints.Length; ++i)
             {
                 int innerVX = realPoints[i].X - Middle.X;
                 int innerVY = realPoints[i].Y - Middle.Y;
 
-                InnerPoly[i].X = Middle.X + (int)(innerVX*Factor);
+                InnerPoly[i].X = Middle.X + (int)(innerVX * Factor);
                 InnerPoly[i].Y = Middle.Y + (int)(innerVY * Factor);
             }
             // Außen zeichnen
@@ -299,7 +299,7 @@ namespace Risiko
             // Innen Zeichnen
             tempObjectbrush = new SolidBrush(Control.field.GiveCountry(IndexIn).colorOfCountry);
             temp.FillPolygon(tempObjectbrush, InnerPoly);
-            
+
         }
 
         public void DrawCorners(int CountryIn)
@@ -314,7 +314,7 @@ namespace Risiko
             Font f = new Font("Arial", 10);
             SolidBrush tempObjectbrush = new SolidBrush(Color.Black);
 
-            for (int i = 0;i < Corners.Length;++i)
+            for (int i = 0; i < Corners.Length; ++i)
             {
                 String Corner = Convert.ToString(Corners[i].X) + ";" + Convert.ToString(Corners[i].Y);
                 // -5 magic, TODO: Verbessern, passt nicht immer (nicht immer in der Mitte -> zweistellig usw.)
@@ -322,7 +322,42 @@ namespace Risiko
             }
         }
 
- 
+        /// <summary>
+        /// TEMP:
+        /// Zeichnet Nachbarländer (zeichnet das Netzwerk an Nachbarländern) 
+        /// um zu überprüfen ob die Nachbarläner richtig ausgelesen wurden
+        /// </summary>
+        public void DrawAllNeighbours()
+        {
+            Graphics temp = pnlMap.CreateGraphics();
+
+            for (int i = 0; i < Control.field.numberOfCountries; ++i)
+            {
+                string[] Neighbours = Control.field.countries[i].neighbouringCountries;
+                for (int j = 0; j < Neighbours.Length; ++j)
+                {
+                    string tempName = Neighbours[j];
+                    int tempK = 0;
+                    for (int k = 0; k < Control.field.numberOfCountries; ++k)
+                        if (Control.field.countries[k].name == tempName)
+                            tempK = k;
+                    temp.DrawLine(stift, Control.GetRealMiddleOfPolygon(Control.field.countries[tempK].corners).X,
+                        Control.GetRealMiddleOfPolygon(Control.field.countries[tempK].corners).Y, Control.GetRealMiddleOfPolygon(Control.field.countries[i].corners).X,
+                        Control.GetRealMiddleOfPolygon(Control.field.countries[i].corners).Y);
+                }
+                Point[] realPoints = Control.GetRealPointsFromCorners(Control.field.countries[i].corners);
+                Point Middle = Control.GetMiddleOfPolygon(realPoints);
+                //zum schreiben
+                Font f = new Font("Arial", 10);
+                SolidBrush tempObjectbrush = new SolidBrush(Color.Black);
+
+                // -5 magic, TODO: Verbessern, passt nicht immer (nicht immer in der Mitte -> zweistellig usw.)
+                temp.DrawString(
+                    Convert.ToString(Control.GetCountryIndexInOwnedCountriesFromName(Control.field.countries[i].name)) + Control.field.countries[i].name, f, tempObjectbrush, Middle.X + 10, Middle.Y + 5);
+            }
+        }
+
+
 
         /// <summary>
         /// Liefert Höhe und Breite von pnlMap,
@@ -342,7 +377,7 @@ namespace Risiko
         }
 
 
-        
+
 
         // KontinenteLabel + EreignisMethoden
         /// <summary>
@@ -351,18 +386,20 @@ namespace Risiko
         public void CreateContinentLabels()
         {
             lblContinents = new Label[Control.field.continents.Length];
-            for (int i = 0;i < Control.field.continents.Length;++i)
+            for (int i = 0; i < Control.field.continents.Length; ++i)
             {
                 lblContinents[i] = new Label();
                 lblContinents[i].Location = new Point(Control.field.firstContLabelPosition.X * Control.factor,
-                                                Control.field.firstContLabelPosition.Y * Control.factor + i*15);
+                                                Control.field.firstContLabelPosition.Y * Control.factor + i * 15);
                 lblContinents[i].Size = new Size(100, 13);
                 lblContinents[i].BackColor = Color.Transparent;
-                lblContinents[i].Text = Control.field.continents[i].nameOfContinent + ":\t" +
+                lblContinents[i].Text = Control.field.continents[i].nameOfContinent + ":  " +
                                  Control.field.continents[i].additionalUnits;
 
                 lblContinents[i].MouseEnter += new EventHandler(lblContinent_MouseEnter);
                 lblContinents[i].MouseLeave += new EventHandler(lblContinent_MouseLeave);
+
+                lblContinents[i].AutoSize = true;
 
                 Controls.Add(lblContinents[i]);
                 lblContinents[i].BringToFront();
@@ -426,16 +463,18 @@ namespace Risiko
 
         private void btnTest2_Click(object sender, EventArgs e)
         {
-            
+            DrawAllNeighbours();
+            Control.GetNeighboursArray();
         }
 
         internal void btnTest_Click(object sender, EventArgs e)
         {
             // neues Spiel
-            string[] name = {"Peter", "Hans"};
-            Color[] color = {Color.FromArgb(0xEE, 0x2C, 0x2C), Color.FromArgb(0x54, 0x8B, 0x54)};
-            bool[] ai = {false, false};
-            Control.StartNewGame(name, color, ai);
+            string[] name = { "Peter", "Hans" };
+            Color[] color = { Color.FromArgb(0xEE, 0x2C, 0x2C), Color.FromArgb(0x54, 0x8B, 0x54) };
+            Color[] color2 = { Color.Red, Color.Green };
+            bool[] ai = { false, false };
+            Control.StartNewGame(name, color2, ai);
             string i = Control.Players[0].name;
         }
 
