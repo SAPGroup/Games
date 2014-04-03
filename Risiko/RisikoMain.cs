@@ -16,10 +16,21 @@ namespace Risiko
 {
     public partial class RisikoMain : Form
     {
-        //
+        // zum zeichnen
         internal Bitmap z_asBitmap;                                              //Bilddatei der Graphic z
         internal Graphics z;
         internal Pen stift;
+
+        /// <summary>
+        /// Modus für verschiedene Spielarten
+        /// 0 = Neues Spiel, Offline
+        /// 1 = Spiel Laden, Offline
+        /// </summary>
+        internal int Mode;
+        /// <summary>
+        ///  Speichert zusätzliche Information, wie Datastring
+        /// </summary>
+        internal string tempInfo;
 
         //Während Laufzeit erstellte Labels
         internal Label[] lblContinents;
@@ -31,9 +42,18 @@ namespace Risiko
             get { return Control; }
         }
 
+        // um Locations zu speichern
+        Point[] ControlLocations = new Point[7];
 
         public RisikoMain()
         {
+            InitializeComponent();
+        }
+
+        public RisikoMain(int ModeIn, string Info)
+        {
+            Mode = ModeIn;
+            tempInfo = Info;
             InitializeComponent();
         }
 
@@ -45,6 +65,7 @@ namespace Risiko
             Control = new GameControl(this);
             // für Ländergrenzen
             stift = new Pen(Color.Black);
+            stift.Width = 1;
             // BackColor der Map
             pnlMap.BackColor = Color.White;
 
@@ -71,6 +92,13 @@ namespace Risiko
 
             // Rote schrift im Message label -> bessere Sichtbarkeit
             lblMessage.ForeColor = Color.Red;
+
+            // Control soll hier direkt laden, spieler erzeugen usw
+            if (Mode == 1)
+            {
+                Control.TxtDataSource = tempInfo;
+                Control.LoadGame();
+            }
         }
 
 
@@ -82,7 +110,9 @@ namespace Risiko
 
         private void btnEndMove_Click(object sender, EventArgs e)
         {
+            SaveControlLocations();
             Control.ButtonMoveAttackSetEnd();
+            LoadControlLocations();
         }
 
         internal void btnOptions_Click(object sender, EventArgs e)
@@ -112,7 +142,9 @@ namespace Risiko
 
         internal void pnlMap_MouseClick(object sender, MouseEventArgs e)
         {
+            SaveControlLocations();
             Control.MouseClicked(e);
+            LoadControlLocations();
         }
 
 
@@ -333,10 +365,10 @@ namespace Risiko
 
             for (int i = 0; i < Control.field.numberOfCountries; ++i)
             {
-                string[] Neighbours = Control.field.countries[i].neighbouringCountries;
+                Country[] Neighbours = Control.field.countries[i].neighbouringCountries;
                 for (int j = 0; j < Neighbours.Length; ++j)
                 {
-                    string tempName = Neighbours[j];
+                    string tempName = Neighbours[j].name;
                     int tempK = 0;
                     for (int k = 0; k < Control.field.numberOfCountries; ++k)
                         if (Control.field.countries[k].name == tempName)
@@ -353,7 +385,7 @@ namespace Risiko
 
                 // -5 magic, TODO: Verbessern, passt nicht immer (nicht immer in der Mitte -> zweistellig usw.)
                 temp.DrawString(
-                    Convert.ToString(Control.GetCountryIndexInOwnedCountriesFromName(Control.field.countries[i].name)) + Control.field.countries[i].name, f, tempObjectbrush, Middle.X + 10, Middle.Y + 5);
+                    Convert.ToString(Control.GetOwnedIndexFromName(Control.field.countries[i].name)) + Control.field.countries[i].name, f, tempObjectbrush, Middle.X + 10, Middle.Y + 5);
             }
         }
 
@@ -376,7 +408,10 @@ namespace Risiko
             Control.DrawMap();
         }
 
-
+        public void ManualRelocate()
+        {
+            
+        }
 
 
         // KontinenteLabel + EreignisMethoden
@@ -436,7 +471,7 @@ namespace Risiko
         public void ShowMessage(string Message)
         {
             lblMessage.Text = Message;
-            timerDeleteMessage.Enabled = true;
+            timerDeleteMessage.Start();
         }
 
         public void DeleteMessage()
@@ -447,7 +482,7 @@ namespace Risiko
         internal void timerDeleteMessage_Tick(object sender, EventArgs e)
         {
             lblMessage.Text = "";
-            timerDeleteMessage.Enabled = false;
+            timerDeleteMessage.Stop();
         }
 
         /// <summary>
@@ -463,8 +498,10 @@ namespace Risiko
 
         private void btnTest2_Click(object sender, EventArgs e)
         {
+            //Refresh();
+            //Application.DoEvents();
             DrawAllNeighbours();
-            Control.GetNeighboursArray();
+            //Control.GetNeighboursArray();
         }
 
         internal void btnTest_Click(object sender, EventArgs e)
@@ -475,7 +512,6 @@ namespace Risiko
             Color[] color2 = { Color.Red, Color.Green };
             bool[] ai = { false, false };
             Control.StartNewGame(name, color2, ai);
-            string i = Control.Players[0].name;
         }
 
         /// <summary>
@@ -486,6 +522,29 @@ namespace Risiko
             pBUnits.Value = Control.actualPlayer.unitsPT;
         }
 
+        public void SaveControlLocations()
+        {
+            ControlLocations[0] = lblMessage.Location;
+            ControlLocations[1] = pBUnits.Location;
+            ControlLocations[2] = btnOptions.Location;
+            ControlLocations[3] = btnEndMoveAttack.Location;
+            ControlLocations[4] = btnDrawMap.Location;
+            ControlLocations[5] = btnTest1.Location;
+            ControlLocations[6] = btnTest2.Location;
+        }
+
+        public void LoadControlLocations()
+        {
+            lblMessage.Location = ControlLocations[0];
+            pBUnits.Location = ControlLocations[1];
+            btnOptions.Location = ControlLocations[2];
+            btnEndMoveAttack.Location = ControlLocations[3];
+            btnDrawMap.Location = ControlLocations[4];
+            btnTest1.Location = ControlLocations[5];
+            btnTest2.Location = ControlLocations[6];
+        }
+
+
         public void NegateVisibilityPB()
         {
             pBUnits.Visible = !pBUnits.Visible;
@@ -494,6 +553,16 @@ namespace Risiko
         public void SetPBColor(Color ColorIn)
         {
             pBUnits.MainColor = ColorIn;
+        }
+
+        public void ActualizePBmax()
+        {
+            pBUnits.Maximum = Control.actualPlayer.unitsPT;
+        }
+
+        private void spielSpeichernToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Control.SaveGame();
         }
 
         //Old

@@ -91,10 +91,9 @@ namespace Risiko
         /// <returns></returns>
         public bool CountriesAreNeighbours(int C1, int C2)
         {
-            string C2Name = Countries[C2].name;
             for (int i = 0;i < Countries[C1].neighbouringCountries.Length;++i)
             {
-                if (Countries[C1].neighbouringCountries[i] == C2Name)
+                if (Countries[C1].neighbouringCountries[i] == Countries[C2])
                     return true;
             }
 
@@ -109,7 +108,7 @@ namespace Risiko
                 {
                     for (int j = 0;j < Countries[i].neighbouringCountries.Length;++j)
                     {
-                        if (Countries[i].neighbouringCountries[j] == Name2)
+                        if (Countries[i].neighbouringCountries[j].name == Name2)
                             return true;
                     }
                 }

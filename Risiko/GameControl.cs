@@ -57,15 +57,21 @@ namespace Risiko
         /// </summary>
         internal bool ActualPlayerHasDoneAnything = false;
 
+        /// <summary>
+        /// Speichert die Länder in den Einzelnen Nachbarschaften ab
+        /// erste Dimension: Nachbarschaften
+        /// zweit: Indizes der Länder (Index aus OwnedCountries des ActualPlayers)
+        /// </summary>
         internal int[][] NeighbouringCountriesFromActualPlayer;
         internal int[] AddUnitsToNeighbourhood;
+
 
         /// <summary>
         /// Zum Ein-Auslesen aus 
         /// </summary>
         internal FileStream fs;
         internal StreamReader sr;
-        internal StreamWriter sw;// TODO: abspeichern 
+        internal StreamWriter sw;
 
         /// <summary>
         /// Quelle aus der die Karte gelesen werden soll TODO: veränderbare Quelldatei
@@ -110,15 +116,11 @@ namespace Risiko
         // ZUM ZEICHNEN
         // false wenn Karte noch gar nicht gezeichnet wurde
         public bool DrawnMap = false;
-        // false echte SpielerFarben, sonst blasser
-        public bool DrawPale = false;
         internal Color ColorCountrySelected = Color.Yellow;
 
         //Moved
         // temporärer Index des zuletzt überfahrenen Landes
         internal int tempMovedIndex = -1;
-        // temporärer Speicher eines überfahrenen Landes
-        internal Color tempMovedCountryColor;
 
         //Clicked
         // Index des zuletzt angeklickten Landes, bei Angreifen und Ziehen (game.gamestate 2 und 3) wichtig
@@ -170,6 +172,314 @@ namespace Risiko
         }
         public GameControl() { }
 
+        // Gamestate, Kontrolle, Wichtige Methoden
+        /// <summary>
+        /// Geht über zu nächstem GameState, falls Ende eines Zuges
+        /// -> nächster Spieler
+        /// </summary>
+        public void nextGameState()
+        {
+            // "normale" Gamestates
+            if (GameState == 1)
+            {
+                GameState = 2;
+                Main.NegateVisibilityPB();
+                StartUnitAdding = false;
+                ActualPlayerHasDoneAnything = false;
+                DrawFullMap();
+            }
+            else if (GameState == 2)
+            {
+                GameState = 3;
+                OrgAttackers = 0;
+                ActualPlayerHasDoneAnything = false;
+                GetNeighboursArray();
+                DrawFullMap();
+            }
+            else if (GameState == 3)
+            {
+                // Neuen ActualPlayer berechnen
+                int PlayerIndex = ActualPlayerIndex();
+                if (PlayerIndex == Players.Length - 1)
+                    ActualPlayer = Players[0];
+                else
+                    ActualPlayer = Players[PlayerIndex + 1];
+
+                // Einheiten berechnen
+                ActualPlayer.unitsPT = GetAddUnitsAtBeginningForActualPlayer();
+                // UnitAdding aktivieren
+                StartUnitAdding = true;
+
+                // neuer Gamestate
+                GameState = 1;
+                // PB sichtbar machen
+                Main.NegateVisibilityPB();
+                // PB wert aktualisieren
+                Main.ActualizePBmax();
+                Main.ActualizePB();
+                // PB farbe auf Spielerfarbe setzen
+                Main.SetPBColor(ActualPlayer.playerColor);
+
+
+                //eigentlich nicht benötigt, Karte neu zeichnen
+                //DrawFullMap();
+            }
+            else if (GameState == 0)
+            {
+                int PlayerIndex = ActualPlayerIndex();
+                // Letzter Spieler hat gesetzt
+                if (PlayerIndex == Players.Length - 1)
+                {
+                    GameState = 1;
+                    ActualPlayer = Players[0];
+                    ActualPlayer.unitsPT = GetAddUnitsAtBeginningForActualPlayer();
+                    Main.ActualizePBmax();
+                    Main.ActualizePB();
+                    Main.SetPBColor(ActualPlayer.playerColor);
+                }
+                // Noch ein Spieler muss setzen
+                else
+                {
+                    ActualPlayer = Players[++PlayerIndex];
+                }
+                Main.SetPBColor(ActualPlayer.playerColor);
+                Main.ActualizePBmax();
+                Main.ActualizePB();
+                DrawFullMap();
+            }
+        }
+        /// <summary>
+        /// Methode die Aufgerufen wird, wenn der wichtigste Button
+        /// MoveEndSet geklickt wird
+        /// </summary>
+        public void ButtonMoveAttackSetEnd()
+        {
+            // "normale" Gamestates
+            if (GameState == 1 | GameState == 0)
+            {
+                // Keine Einheiten mehr zu setzen
+                if (ActualPlayer.unitsPT == 0)
+                {
+                    // Einheiten in Länder "verschieben"
+                    for (int i = 0; i < Field.countries.Length; ++i)
+                    {
+                        if (UnitsToAdd[i] != 0)
+                        {
+                            Field.countries[i].unitsStationed += UnitsToAdd[i];
+                            // Direkt danach mit 0 belegen für nächsten Spieler
+                            UnitsToAdd[i] = 0;
+                        }
+                    }
+                    // Nächster Spieler
+                    nextGameState();
+                }
+                else
+                {
+                    // Fehlermeldung
+                    Main.ShowMessage("Sie haben noch Einheiten zu setzen.");
+                }
+            }
+            // Gamestate 2
+            else if (GameState == 2)
+            {
+                if (tempClickedScndIndex == -1 && tempClickedFstIndex == -1)
+                {
+                    if (!ActualPlayerHasDoneAnything)
+                        nextGameState();
+                    else
+                    {
+                        Main.ShowMessage("Wollen Sie den Zug wirklich ohne Angriff beenden?");
+                        ActualPlayerHasDoneAnything = true;
+                    }
+                }
+                // nur ein ausgewähltes Land
+                else if (tempClickedFstIndex == -1 & tempClickedScndIndex != -1 |
+                            tempClickedFstIndex != -1 & tempClickedScndIndex == -1)
+                {
+                    Main.ShowMessage("Sie haben noch kein zweites Land ausgewählt.");
+                }
+                else if (tempClickedFstIndex != -1 & tempClickedScndIndex != -1)
+                {
+                    Attack();
+                }
+            }
+            // GameState 3
+            else if (GameState == 3)
+            {
+                if (CheckUnitsToSetLeft())
+                {
+                    Main.ShowMessage("Sie haben noch Einheiten zu setzen.");
+                }
+                else
+                {
+                    nextGameState();
+                }
+            }
+        }
+        /// <summary>
+        /// Steuert Attacke
+        /// Attackiert von FstIndex nach ScndIndex
+        /// mit Anzahl der Einheiten die in Einstellungen
+        /// von ActualPlayer angegeben sind
+        /// </summary>
+        public void Attack()
+        {
+            if (ActualPlayer.settingAttack == -1)
+            {
+                // OrgAttackers noch nicht gesetzt
+                if (Field.countries[tempClickedFstIndex].unitsStationed >= 2)
+                {
+                    OrgAttackers = Field.countries[tempClickedFstIndex].unitsStationed - 1;
+                }
+                else
+                {
+                    Main.ShowMessage("Zu Wenig Einheiten um anzugreifen.");
+                    return;
+                }
+                int Attackers = OrgAttackers;
+
+                // eigentlicher Angriff
+                if (ActualPlayer.settingEndAttackLossPercentage != 0)
+                {
+                    while (CheckLosses() & Attackers > 0)
+                    {
+                        int ActualUnits = Field.countries[tempClickedFstIndex].unitsStationed;
+                        if (Attackers >= 3)
+                            DoActualAttack(3);
+                        else
+                            DoActualAttack(Attackers);
+                        Attackers -= (ActualUnits - Field.countries[tempClickedFstIndex].unitsStationed);
+                        if (CheckOwnerShipNew(Attackers))
+                            break;
+                    }
+                    Main.ShowMessage("Der Angriff wurde wegen Verlusten abgebrochen.");
+                    ResetClickedCountries(3);
+                }
+                else
+                {
+                    while (Attackers > 0)
+                    {
+                        int ActualUnits = Field.countries[tempClickedFstIndex].unitsStationed;
+                        if (Attackers >= 3)
+                            DoActualAttack(3);
+                        else
+                            DoActualAttack(Attackers);
+                        Attackers -= (ActualUnits - Field.countries[tempClickedFstIndex].unitsStationed);
+                        if (CheckOwnerShipNew(Attackers))
+                            break;
+                    }
+                }
+            }
+            // 3er-AttackModus
+            else if (ActualPlayer.settingAttack == 0)
+            {
+                int Attackers;
+                if (Field.countries[tempClickedFstIndex].unitsStationed - 1 > 3)
+                    Attackers = 3;
+                else
+                    Attackers = Field.countries[tempClickedFstIndex].unitsStationed - 1;
+
+                DoActualAttack(Attackers);
+                if (!CheckOwnerShipNew(Attackers))
+                {
+                    DrawCountryFull(tempClickedFstIndex);
+                    DrawCountryFull(tempClickedScndIndex);
+                }
+
+                //DrawCountryFull(tempClickedFstIndex);
+                //DrawCountryFull(tempClickedScndIndex);
+            }
+            // Custom Unit-Mode
+            else if (ActualPlayer.settingAttack > 0)
+            {
+                int Attackers = ActualPlayer.settingAttack;
+                if (Field.countries[tempClickedFstIndex].unitsStationed - 1 < Attackers)
+                    Attackers = Field.countries[tempClickedFstIndex].unitsStationed - 1;
+                OrgAttackers = Attackers;
+
+                while (CheckLosses() & Attackers > 0)
+                {
+                    int ActualUnits = Field.countries[tempClickedFstIndex].unitsStationed;
+                    if (Attackers >= 3)
+                        DoActualAttack(3);
+                    else
+                        DoActualAttack(Attackers);
+                    Attackers -= (ActualUnits - Field.countries[tempClickedFstIndex].unitsStationed);
+                    if (CheckOwnerShipNew(Attackers))
+                        break;
+                }
+            }
+        }
+
+        // Anfang des Spiels
+        /// <summary>
+        /// Startet neues Spiel
+        /// </summary>
+        /// <param name="Names"></param>
+        /// <param name="Colors"></param>
+        /// <param name="AI"></param>
+        public void StartNewGame(string[] Names, Color[] Colors, bool[] AI)
+        {
+            // Karte Laden
+            //DrawAndLoadMap();
+            LoadAllFromTxtSource();
+            // prüfen ob alle arrays gleich lang sind
+            if (Names.Length != Colors.Length)
+                return;
+            // Players-Array erzeugen
+            Players = new Player[Names.Length];
+            //einzelne Player erzeugen
+            for (int i = 0; i < Names.Length; ++i)
+            {
+                Players[i] = new Player(Names[i], AI[i], Colors[i]);
+            }
+            // Länder verteilen
+            SpreadCountriesToPlayers();
+            // Karte mit neuen Länderfarben zeichnen
+            DrawMap();
+            DrawFullMap();
+            // Gamestate festlegen
+            GameState = 0;
+            // UnitsToAdd-Array erstellen
+            UnitsToAdd = new int[Field.countries.Length];
+            // Zeigt an das das Einheiten-Setzen begonnen hat
+            StartUnitAdding = true;
+            // ActualPlayer festlegen
+            ActualPlayer = Players[0];
+
+            for (int i = 0; i < Players.Length; ++i)
+            {
+                Players[i].unitsPT = 3;
+            }
+            ActualPlayer.ownedCountries[0].unitsStationed = 1;
+
+            Main.pBUnits.Maximum = actualPlayer.unitsPT;
+            Main.pBUnits.Value = actualPlayer.unitsPT;
+        }
+        public void LoadGame()
+        {
+            // Lädt alles aus TxtSource
+            LoadAllFromTxtSource();
+            // Spieler Laden
+            LoadPlayersFromSavegameTxtSource();
+            // Länder
+            LoadCountriesFromTxtSource();
+            //Kontinente aus QuellStringArray lesen
+            LoadContinentsFromTxtSource();
+            //Kontinent-Tabelle lesen
+            LoadContinentsTableFromTxtSource();
+
+            // ein Gamestate weiter machen
+            nextGameState();
+            // Karte zeichnen
+            DrawMap();
+            DrawFullMap();
+        }
+
+
+
+
+
 
         //Karte zeichnen
         /// <summary>
@@ -217,7 +527,7 @@ namespace Risiko
             // neuen Faktor auslesen
             int[] WidthHeight = Main.GetMapData();
             CheckFactor(WidthHeight[0], WidthHeight[1]);
-            // bei veränderung neu zeichnen TODO: DrawFlag ?? 
+            // bei veränderung neu zeichnen
             if (tempOldFactor != Factor)
             {
                 Main.DrawMap();
@@ -287,8 +597,25 @@ namespace Risiko
                 }
             }
         }
+        /// <summary>
+        /// Erzeugt die KontinentLabels
+        /// </summary>
+        internal void ResizeContinentLabels()
+        {
+            if (Main.lblContinents == null)
+                Main.CreateContinentLabels();
+            for (int i = 0; i < Field.continents.Length; ++i)
+            {
+                Main.lblContinents[i].Font = new Font(Main.lblContinents[i].Font.FontFamily, Factor);
+                Main.lblContinents[i].Location = new Point(Field.firstContLabelPosition.X * Factor,
+                                                            Field.firstContLabelPosition.Y * Factor + i * Factor * 2);
+                Main.lblContinents[i].Size = new Size(Factor * 13, Factor * 3);
 
-        // "Datenbank", inzwischen TxtDatei
+                //Main.lblContinents[i].BringToFront();
+            }
+        }
+
+        // Quell-TxtDatei
         /// <summary>
         /// Lädt "alles" aus Txt Source
         /// keine Weiterverarbeitung
@@ -369,7 +696,7 @@ namespace Risiko
 
                     // Name und Farbe des Landes auslesen
                     tempColor = GetColorFromString(Parts[0]);
-                    tempName = Parts[1];
+                    tempName = Parts[1].Trim('\t');
 
                     // Eckpunkte des Landes auslesen, -> String wieder zerlegen
                     string[] Corners = Parts[4].Split(';');
@@ -384,7 +711,14 @@ namespace Risiko
                         if (Convert.ToInt32(Corners[i * 2 + 1]) > tempMaxY)
                             tempMaxY = Convert.ToInt32(Corners[i * 2 + 1]);
                     }
-                    Field.countries[j] = new Country(tempName, tempPoints, tempColor);
+                    if(Convert.ToInt32(Parts[2]) == -1 | Players == null)
+                        Field.countries[j] = new Country(tempName, tempPoints, tempColor);
+                    else
+                    {
+                        int tempUnits = Convert.ToInt32(Parts[3]);
+                        Field.countries[j] = new Country(tempName, tempPoints, tempColor, Players[Convert.ToInt32(Parts[2])], tempUnits);
+                        Players[Convert.ToInt32(Parts[2])].AddOwnedCountry(Field.countries[j]);
+                    }
                 }
                 Field.height = tempMaxY;
                 Field.width = tempMaxX;
@@ -402,11 +736,11 @@ namespace Risiko
                     string[] Parts = zeile.Split('.');
 
                     string[] Neighbours = Parts[5].Split(';');
-                    string[] tempNeighbouringCountries = new string[Neighbours.Length];
+                    Country[] tempNeighbouringCountries = new Country[Neighbours.Length];
                     for (int i = 0; i < Neighbours.Length; ++i)
                     {
                         int tempCountryID = Convert.ToInt32(Neighbours[i]);
-                        tempNeighbouringCountries[i] = Field.countries[tempCountryID - 1].name;
+                        tempNeighbouringCountries[i] = Field.countries[tempCountryID - 1];
                     }
 
                     Field.countries[j].neighbouringCountries = tempNeighbouringCountries;
@@ -531,305 +865,218 @@ namespace Risiko
             }
         }
         /// <summary>
-        /// Erzeugt die KontinentLabels
+        /// Lädt Spieler, ActualPlayer und Gamestate aus TxtSource
         /// </summary>
-        internal void ResizeContinentLabels()
+        internal void LoadPlayersFromSavegameTxtSource()
         {
-            if (Main.lblContinents == null)
-                Main.CreateContinentLabels();
-            for (int i = 0; i < Field.continents.Length; ++i)
+            if (TxtSource != null)
             {
-                Main.lblContinents[i].Font = new Font(Main.lblContinents[i].Font.FontFamily, Factor);
-                Main.lblContinents[i].Location = new Point(Field.firstContLabelPosition.X * Factor,
-                                                            Field.firstContLabelPosition.Y * Factor + i * Factor * 2);
-                Main.lblContinents[i].Size = new Size(Factor * 13, Factor * 3);
+                //StartIndex der Länder und Länge
+                int StartIndex = 0, Length = 0;
+                SearchForSpecialPartFromTxtSource(ref StartIndex, ref Length, TxtSource, "Players");
 
-                //Main.lblContinents[i].BringToFront();
-            }
-        }
+                Players = new Player[Length];
 
-        // Gamestate, Kontrolle, Wichtige Methoden
-        /// <summary>
-        /// Geht über zu nächstem GameState, falls Ende eines Zuges
-        /// -> nächster Spieler
-        /// </summary>
-        public void nextGameState()
-        {
-            // "normale" Gamestates
-            if (GameState == 1)
-            {
-                GameState = 2;
-                Main.NegateVisibilityPB();
-                StartUnitAdding = false;
-                DrawFullMap();
-            }
-            else if (GameState == 2)
-            {
-                GameState = 3;
-                OrgAttackers = 0;
-                ActualPlayerHasDoneAnything = false;
-                DrawFullMap();
-            }
-            else if (GameState == 3)
-            {
-                // Neuen ActualPlayer berechnen
-                int PlayerIndex = ActualPlayerIndex();
-                if (PlayerIndex == Players.Length - 1)
-                    ActualPlayer = Players[0];
-                else
-                    ActualPlayer = Players[PlayerIndex + 1];
+                string tempName;
+                Color tempColor;
+                bool tempIsAI;
+                int ActualPlayerIndex = 0;
+                int ActualGamestate = 0;
 
-                // neuer Gamestate
-                GameState = 1;
-                // PB sichtbar machen
-                Main.NegateVisibilityPB();
-                // PB wert aktualisieren
-                Main.ActualizePB();
-                // PB farbe auf Spielerfarbe setzen
-                Main.SetPBColor(ActualPlayer.playerColor);
+                for (int j = 0; j < Length; ++j)
+                {
+                    string zeile = TxtSource[StartIndex + j];
+                    //Kommentarzeilen überspringen
+                    if (zeile.StartsWith("//"))
+                        continue;
+                    //Tabs und Leerzeichen entfernen
+                    zeile = zeile.Trim('\t', ' ');
+                    // Zeile zerlegen
+                    string[] Parts = zeile.Split('.');
 
-                // Einheiten berechnen
-                ActualPlayer.unitsPT = GetAddUnitsAtBeginningForActualPlayer();
-                // UnitAdding aktivieren
-                StartUnitAdding = true;
-                //eigentlich nicht benötigt, Karte neu zeichnen
-                //DrawFullMap();
-            }
-            else if (GameState == 0)
-            {
-                int PlayerIndex = ActualPlayerIndex();
-                // Letzter Spieler hat gesetzt
-                if (PlayerIndex == Players.Length - 1)
-                {
-                    GameState = 1;
-                    ActualPlayer = Players[0];
-                    ActualPlayer.unitsPT = GetAddUnitsAtBeginningForActualPlayer();
-                    Main.ActualizePB();
-                    Main.SetPBColor(ActualPlayer.playerColor);
-                }
-                // Noch ein Spieler muss setzen
-                else
-                {
-                    ActualPlayer = Players[++PlayerIndex];
-                }
-                Main.SetPBColor(ActualPlayer.playerColor);
-                Main.ActualizePB();
-                DrawFullMap();
-            }
-        }
-        /// <summary>
-        /// Methode die Aufgerufen wird, wenn der wichtigste Button
-        /// MoveEndSet geklickt wird
-        /// </summary>
-        public void ButtonMoveAttackSetEnd()
-        {
-            // "normale" Gamestates
-            if (GameState == 1 | GameState == 0)
-            {
-                // Keine Einheiten mehr zu setzen
-                if (ActualPlayer.unitsPT == 0)
-                {
-                    // Einheiten in Länder "verschieben"
-                    for (int i = 0; i < Field.countries.Length; ++i)
-                    {
-                        if (UnitsToAdd[i] != 0)
-                        {
-                            Field.countries[i].unitsStationed += UnitsToAdd[i];
-                            // Direkt danach mit 0 belegen für nächsten Spieler
-                            UnitsToAdd[i] = 0;
-                        }
-                    }
-                    // Nächster Spieler
-                    nextGameState();
-                }
-                else
-                {
-                    // Fehlermeldung
-                    Main.ShowMessage("Sie haben noch Einheiten zu setzen.");
-                }
-            }
-            // Gamestate 2 u 3 teilweise gleich zusammenfassen? 
-            else if (GameState == 2)
-            {
-                if (tempClickedScndIndex == -1 && tempClickedFstIndex == -1)
-                {
-                    if (ActualPlayerHasDoneAnything)
-                        nextGameState();
+                    tempName = Parts[0];
+                    tempColor = GetColorFromString(Parts[1]);
+                    if (Parts[3] != "1")
+                        tempIsAI = false;
                     else
+                        tempIsAI = true;
+                    if (Convert.ToInt32(Parts[2]) != 0)
                     {
-                        Main.ShowMessage("Wollen Sie den Zug wirklich ohne Angriff beenden?");
-                        ActualPlayerHasDoneAnything = true;
+                        ActualPlayerIndex = j;
+                        ActualGamestate = Convert.ToInt32(Parts[2]) -1;
                     }
+                    Players[j] = new Player(tempName, tempIsAI, tempColor);
                 }
-                // nur ein ausgewähltes Land
-                else if (tempClickedFstIndex == -1 & tempClickedScndIndex != -1 |
-                            tempClickedFstIndex != -1 & tempClickedScndIndex == -1)
-                {
-                    Main.ShowMessage("Sie haben noch kein zweites Land ausgewählt.");
-                }
-                else if (tempClickedFstIndex != -1 & tempClickedScndIndex != -1)
-                {
-                    Attack();
-                }
+                ActualPlayer = Players[ActualPlayerIndex];
+                if (ActualGamestate < 0)
+                    ActualGamestate += 4;
+                GameState = ActualGamestate;
             }
-            else if (GameState == 3)
+        }
+
+        //Speichern
+        /// <summary>
+        /// Veranlasst Speichervorgang zu starten
+        /// </summary>
+        internal void SaveGame()
+        {
+            SaveFileDialog sfd = new SaveFileDialog();
+
+            //sfd.InitialDirectory =;
+            sfd.Filter = " Texte (*.txt)|*.txt|" + " Alle Dateien (*.*)|*.*";
+            sfd.Title = "Datei zum Speichern auswählen";
+            if (sfd.ShowDialog() == DialogResult.OK)
             {
-                if (tempClickedScndIndex == -1 && tempClickedFstIndex == -1)
-                {
-                    nextGameState();
-                }
-                else if (   tempClickedFstIndex == -1 & tempClickedScndIndex != -1 |
-                            tempClickedFstIndex != -1 & tempClickedScndIndex == -1)
-                {
-                    Main.ShowMessage("Sie haben noch ein Land ausgewählt.");
-                }
-                else if (tempClickedFstIndex != -1 & tempClickedScndIndex != -1)
-                {
-                    Move();
-                }
+                WriteSavegame(sfd.FileName);
+            }
+            else
+            {
+                MessageBox.Show("Es ist ein Fehler aufgetreten.");
             }
         }
         /// <summary>
-        /// Attackiert von FstIndex nach ScndIndex
-        /// mit Anzahl der Einheiten die in Einstellungen
-        /// von ActualPlayer angegeben sind
+        /// Schreibt "Spielstand" in SaveLocation 
         /// </summary>
-        public void Attack()
+        /// <param name="SaveLocation"></param>
+        internal void WriteSavegame(string SaveLocation)
         {
-            if (ActualPlayer.settingAttack == -1)
+            // Erzeigt FileStream
+            fs = new FileStream(SaveLocation, FileMode.Create);
+            sw = new StreamWriter(fs);
+
+            // Alle Länder, Kontinente, Spieler + StartEnd jeweils und ContinentTable
+            int LengthOfOutBuff = Field.countries.Length + Field.continents.Length + Players.Length + 9;
+            string[] ToWriteBuff = new string[LengthOfOutBuff];
+            // Speichert Countries
+            WriteCountriesToSaveGame(ref ToWriteBuff);
+            // Speichert Continente
+            WriteContinentsToSaveGame(ref ToWriteBuff);
+            // Speichert KontinentenTabelle
+            WriteContinentTableToSaveGame(ref ToWriteBuff);
+            // speichert Spieler ab
+            WritePlayersToSaveGame(ref ToWriteBuff);
+
+            // Letztliches wirkliches abspeichern
+            for (int i = 0;i < ToWriteBuff.Length;++i)
             {
-                // OrgAttackers noch nicht gesetzt
-                if (Field.countries[tempClickedFstIndex].unitsStationed >= 2)
-                {
-                    OrgAttackers = Field.countries[tempClickedFstIndex].unitsStationed - 1;
-                }
-                else
-                {
-                    Main.ShowMessage("Zu Wenig Einheiten um anzugreifen.");
-                    return;
-                }
-                int Attackers = OrgAttackers;
+                sw.WriteLine(ToWriteBuff[i]);
+            }
+            sw.Close();
+        }
+        /// <summary>
+        /// Schreibt alle Länder in lesbarem Format in OutBuff
+        /// </summary>
+        /// <param name="OutBuff"></param>
+        internal void WriteCountriesToSaveGame(ref string[] OutBuff)
+        {
+            OutBuff[0] = "Start Countries";
+            int i;
+            for (i = 0;i < Field.countries.Length;++i)
+            {
+                string tempOut = "";
+                //Farbe
+                tempOut += GetStringFromColor(Field.countries[i].colorOfCountry) + ".";
+                // Name
+                tempOut += Field.countries[i].name + ".";
+                // Spieler
+                for (int j = 0;j < Players.Length;++j)
+                    if (Field.countries[i].owner.name == Players[j].name)
+                        tempOut += Convert.ToString(j) + ".";
                 
-                // eigentlicher Angriff
-                if (ActualPlayer.settingEndAttackLossPercentage != 0)
+                // Einheiten
+                tempOut += Convert.ToString(Field.countries[i].unitsStationed) + ".";
+                // Corners
+                for (int j = 0; j < Field.countries[i].corners.Length; ++j )
                 {
-                    while (CheckLosses() & Attackers > 0)
-                    {
-                        int ActualUnits = Field.countries[tempClickedFstIndex].unitsStationed;
-                        if (Attackers >= 3)
-                            DoActualAttack(3);
-                        else
-                            DoActualAttack(Attackers);
-                        Attackers -= (ActualUnits - Field.countries[tempClickedFstIndex].unitsStationed);
-                        if (CheckOwnerShipNew(Attackers))
-                            break;
-                    }
-                    Main.ShowMessage("Der Angriff wurde wegen Verlusten abgebrochen.");
-                    ResetClickedCountries(3);
+                    tempOut += Convert.ToString(Field.countries[i].corners[j].X) + ";";
+                    tempOut += Convert.ToString(Field.countries[i].corners[j].Y) + ";";
                 }
-                else
-                {
-                    while (Attackers > 0)
-                    {
-                        int ActualUnits = Field.countries[tempClickedFstIndex].unitsStationed;
-                        if(Attackers >= 3)
-                            DoActualAttack(3);
-                        else
-                            DoActualAttack(Attackers);
-                        Attackers -= (ActualUnits - Field.countries[tempClickedFstIndex].unitsStationed);
-                        if (CheckOwnerShipNew(Attackers))
-                            break;
-                    }
-                }
-            }
-            // 3er-AttackModus
-            else if (ActualPlayer.settingAttack == 0)
-            {
-                int Attackers;
-                if (Field.countries[tempClickedFstIndex].unitsStationed-1 > 3)
-                    Attackers = 3;
-                else
-                    Attackers = Field.countries[tempClickedFstIndex].unitsStationed - 1;
+                tempOut = tempOut.TrimEnd(';');
+                tempOut += ".";
 
-                DoActualAttack(Attackers);
-                CheckOwnerShipNew(Attackers);
+                // Neighbours
+                for (int j = 0;j < Field.countries[i].neighbouringCountries.Length;++j)
+                    for (int k = 0; k < Field.countries.Length; ++k)
+                        if (Field.countries[k] == Field.countries[i].neighbouringCountries[j])
+                            tempOut += Convert.ToString(k+1) + ";";
+                tempOut = tempOut.TrimEnd(';');
+                tempOut += ".";
+                
+                //Continents
+                tempOut += Convert.ToString(Field.countries[i].continent+1);
 
-                //DrawCountryFull(tempClickedFstIndex);
-                //DrawCountryFull(tempClickedScndIndex);
+                // festlegen
+                OutBuff[i+1] = tempOut;
             }
-            // Curstom Unit-Mode
-            else if (ActualPlayer.settingAttack > 0)
-            {
-                int Attackers = ActualPlayer.settingAttack;
-                if (Field.countries[tempClickedFstIndex].unitsStationed - 1 < Attackers)
-                    Attackers = Field.countries[tempClickedFstIndex].unitsStationed - 1;
-                OrgAttackers = Attackers;
-
-                while (CheckLosses() & Attackers > 0)
-                {
-                    int ActualUnits = Field.countries[tempClickedFstIndex].unitsStationed;
-                    if (Attackers >= 3)
-                        DoActualAttack(3);
-                    else
-                        DoActualAttack(Attackers);
-                    Attackers -= (ActualUnits - Field.countries[tempClickedFstIndex].unitsStationed);
-                    if (CheckOwnerShipNew(Attackers))
-                        break;
-                }
-            }
+            OutBuff[i+1] = "End Countries";
         }
-        public void Move()
-        {
-            
-        }
-
-        
-
-        // Neues Spiel
         /// <summary>
-        /// Startet neues Spiel
+        /// Speichert die Kontinente lesbar in SaveGame ab
         /// </summary>
-        /// <param name="Names"></param>
-        /// <param name="Colors"></param>
-        /// <param name="AI"></param>
-        public void StartNewGame(string[] Names, Color[] Colors, bool[] AI)
+        /// <param name="OutBuff"></param>
+        internal void WriteContinentsToSaveGame(ref string[] OutBuff)
         {
-            // Karte Laden
-            //DrawAndLoadMap();
-            LoadAllFromTxtSource();
-            // prüfen ob alle arrays gleich lang sind
-            if (Names.Length != Colors.Length)
-                return;
-            // Players-Array erzeugen
-            Players = new Player[Names.Length];
-            //einzelne Player erzeugen
-            for (int i = 0; i < Names.Length; ++i)
+            int StartingIndex = Field.countries.Length + 3;
+            OutBuff[StartingIndex - 1] = "Start Continents";
+            int i;
+            for (i = 0;i < Field.continents.Length;++i)
             {
-                Players[i] = new Player(Names[i], AI[i], Colors[i]);
+                string tempOut = "";
+                // Name
+                tempOut += Field.continents[i].nameOfContinent + ".";
+                // additionalUnits
+                tempOut += Convert.ToString(Field.continents[i].additionalUnits) + ".";
+                // Number of Countries
+                tempOut += Convert.ToString(Field.continents[i].numberOfCountries);
+
+                OutBuff[StartingIndex + i] = tempOut;
             }
-            // Länder verteilen
-            SpreadCountriesToPlayers();
-            // Karte mit neuen Länderfarben zeichnen
-            DrawMap();
-            DrawFullMap();
-            // Gamestate festlegen
-            GameState = 0;
-            // UnitsToAdd-Array erstellen
-            UnitsToAdd = new int[Field.countries.Length];
-            // Zeigt an das das Einheiten-Setzen begonnen hat
-            StartUnitAdding = true;
-            // ActualPlayer festlegen
-            ActualPlayer = Players[0];
-
-            for (int i = 0; i < Players.Length; ++i)
-            {
-                Players[i].unitsPT = 20;
-            }
-
-
-            Main.pBUnits.Maximum = actualPlayer.unitsPT;
-            Main.pBUnits.Value = actualPlayer.unitsPT;
+            OutBuff[i + StartingIndex] = "End Continents";
         }
+        /// <summary>
+        /// Speichert die KontinentenTabelle lesbar in SaveGame
+        /// </summary>
+        /// <param name="OutBuff"></param>
+        internal void WriteContinentTableToSaveGame(ref string[] OutBuff)
+        {
+            int StartingIndex = Field.countries.Length + Field.continents.Length + 4;
+            OutBuff[StartingIndex] = "Start ContinentTable";
+            OutBuff[StartingIndex + 1] = Convert.ToString(Field.firstContLabelPosition.X) + ";";
+            OutBuff[StartingIndex + 1] += Convert.ToString(Field.firstContLabelPosition.Y);
+            OutBuff[StartingIndex + 2] = "End ContinentTable";
+        }
+        /// <summary>
+        /// Speichert Spieler lesbar in SaveGame
+        /// </summary>
+        /// <param name="OutBuff"></param>
+        internal void WritePlayersToSaveGame(ref string[] OutBuff)
+        {
+            int StartingIndex = Field.countries.Length + Field.continents.Length + 8;
+            OutBuff[StartingIndex - 1] = "Start Players";
+            int i;
+            for (i = 0;i < Players.Length;++i)
+            {
+                string tempOut = "";
+                // Name
+                tempOut += Players[i].name + ".";
+                // Farbe
+                tempOut += GetStringFromColor(Players[i].playerColor) + ".";
+                // ActualPlayer/Gamestate
+                if (ActualPlayer == Players[i])
+                    tempOut += Convert.ToString(GameState) + ".";
+                else
+                    tempOut += "-1" + ".";
+                // isAi
+                if (Players[i].AIPlayer)
+                    tempOut += "1";
+                else
+                    tempOut += "0";
+
+                OutBuff[StartingIndex + i] = tempOut;
+            }
+            OutBuff[StartingIndex + i] = "End Players";
+        }
+
 
         //Maus-Aktionen
         /// <summary>
@@ -838,18 +1085,16 @@ namespace Risiko
         /// <param name="e"></param>
         public void MouseMoved(MouseEventArgs e)
         {
+
             // ist Einstellung
+            // Speichert in temp den Index des Landes ab, über dem sich der Mauszeiger befindet
+            int temp = CheckClickInCountry(new Point(e.X, e.Y));
             if (autoLanderkennung)
             {
-                // Speichert in temp den Index des Landes ab, über dem sich der Mauszeiger befindet
-                int temp = CheckClickInCountry(new Point(e.X, e.Y));
-
                 // Kein Treffer
                 if (temp == -1 & tempMovedIndex != -1)
                 {
                     //kein Treffer
-                    //Field.countries[tempMovedIndex].colorOfCountry = tempMovedCountryColor;
-
                     DrawCountryFull(tempMovedIndex);
                     tempMovedIndex = -1;
                 }
@@ -859,19 +1104,31 @@ namespace Risiko
                     //zuvor Bereits Land ausgewählt                
                     if (tempMovedIndex != -1)
                     {
-                        //Field.countries[tempMovedIndex].colorOfCountry = tempMovedCountryColor;
                         DrawCountryFull(tempMovedIndex);
                     }
 
-                    //tempMovedCountryColor = Field.countries[temp].colorOfCountry;
-                    //Field.countries[temp].colorOfCountry = ColorCountrySelected;
-
                     tempMovedIndex = temp;
-
-                    //DrawCountryFull(temp);
+                    
                     DrawCountryFullSelected(temp);
                 }
             }
+            //if (GameState == 3 & temp != -1)
+            //{
+            //    int tempIndex = GetNumberIndexOutOf2DArray(NeighbouringCountriesFromActualPlayer, temp)[0];
+            //    int[] tempIndizes = NeighbouringCountriesFromActualPlayer[tempIndex];
+            //    for (int i = 0;i < tempIndizes.Length;++i)
+            //    {
+            //        string tempname = ActualPlayer.ownedCountries[tempIndizes[i]].name;
+            //        for (int j = 0;j < Field.countries.Length;++j)
+            //        {
+            //            if (Field.countries[j].name == tempname)
+            //            {
+            //                DrawCountryFullSelected(j);
+            //            }
+            //        }
+            //    }
+            //    Main.ShowMessage(Convert.ToString(AddUnitsToNeighbourhood[tempIndex]));
+            //}
         }
         /// <summary>
         /// 
@@ -1031,83 +1288,56 @@ namespace Risiko
                 }
             }
         }
+        /// <summary>
+        /// bei Gamestate = 3, BewegungsModus
+        /// Wie beim setzen nur mit abziehen und nur 
+        /// innerhalb der Nachbarschaft setzbar
+        /// Abfrage nach Buttons usw wird auch hier getätigt
+        /// </summary>
+        /// <param name="tempCountryIn"></param>
+        /// <param name="e"></param>
         public void MouseClickedMoveMode(int tempCountryIn, MouseEventArgs e)
         {
-            // Linksklick in Land
-            if (tempCountryIn != -1 & e.Button == MouseButtons.Left)
+            if (tempCountryIn != -1)
             {
-                if (tempClickedFstIndex == -1)
+                if (Field.countries[tempCountryIn].owner == actualPlayer)
                 {
-                    //eigenes Land
-                    if (actualPlayer == Field.countries[tempCountryIn].owner)
+                    // Wird in allen Verzweigungn potentiell benötigt, da von TempCountryIn abhängig
+                    // nur wenn dieses != -1 ist
+                    int ownedindex = GetOwnedIndexFromName(Field.countries[tempCountryIn].name);
+                    int tempIndex = GetNumberIndexOutOf2DArray(NeighbouringCountriesFromActualPlayer, ownedindex)[0];
+                    // Linksklick in Land
+                    if (e.Button == MouseButtons.Left)
                     {
-                        // Index und Farbe abspeichern
-                        tempClickedFstCountryColor = Field.countries[tempCountryIn].colorOfCountry;
-                        tempClickedFstIndex = tempCountryIn;
-
-                        // Gelb machen
-                        Field.countries[tempClickedFstIndex].colorOfCountry = ColorCountrySelected;
-                        // zeichnen
-                        DrawCountryFull(tempClickedFstIndex);
-                    }
-                    // Nicht eigenes Land
-                    else
-                    {
-                        Main.ShowMessage("Wählen Sie eines Ihrer eigenen Länder.");
-                    }
-                }
-                // Zuvor schon Land angeklickt
-                else if (tempClickedFstIndex != -1)
-                {
-                    if (tempClickedScndIndex != -1 & tempClickedFstIndex != -1)
-                    {
-                        Main.ShowMessage("Sie können nicht mehr als 2 Länder auswählen.");
-                        return;
-                    }
-                    // gegnerisches Land
-                    if (actualPlayer != Field.countries[tempCountryIn].owner)
-                    {
-                        // gegnerisches Nachbarland
-                        if (Field.CountriesAreNeighbours(tempClickedFstIndex, tempCountryIn))
+                        if (AddUnitsToNeighbourhood[tempIndex] > 0)
                         {
-                            //Index und Farbe abspeichern
-                            tempClickedScndIndex = tempCountryIn;
-                            tempClickedScndCountryColor = Field.countries[tempCountryIn].colorOfCountry;
-
-                            // Gelb machen
-                            Field.countries[tempClickedScndIndex].colorOfCountry = ColorCountrySelected;
-                            // zeichnen
-                            DrawCountryFull(tempClickedScndIndex);
+                            AddUnitsToNeighbourhood[tempIndex]--;
+                            Field.countries[tempCountryIn].unitsStationed++;
+                            DrawCountryFullSelected(tempCountryIn);
                         }
-                        // zwar gegnerisches Land, jedoch kein Nachbar
                         else
                         {
-                            Main.ShowMessage("Wählen Sie ein benachbartes gegnerisches Land.");
+                            Main.ShowMessage("Sie haben keine Einheit mehr, die Sie in diesem Bereich setzen können.");
                         }
                     }
-                    // eigenes Land
-                    else
+                    // Rechtsklick
+                    else if (e.Button == MouseButtons.Right)
                     {
-                        Main.ShowMessage("Wählen Sie ein gegnerisches Land.");
+                        if (Field.countries[tempCountryIn].unitsStationed > 1)
+                        {
+                            Field.countries[tempCountryIn].unitsStationed--;
+                            AddUnitsToNeighbourhood[tempIndex]++;
+                            DrawCountryFullSelected(tempCountryIn);
+                        }
+                        else
+                        {
+                            Main.ShowMessage("Sie können kein Land ohne wenigstens eine Einheit zurücklassen.");
+                        }
                     }
                 }
-            }
-            // Rechtsklick
-            else if (e.Button == MouseButtons.Right)
-            {
-                // Fst und Scnd werden resettet
-                ResetClickedCountries(3);
-            }
-            // Linksklick außerhalb des Landes
-            else if (tempCountryIn == -1 & e.Button == MouseButtons.Left)
-            {
-                if (tempClickedScndIndex != -1)
+                else
                 {
-                    ResetClickedCountries(2);
-                }
-                else if (tempClickedScndIndex == -1 & tempClickedFstIndex != -1)
-                {
-                    ResetClickedCountries(1);
+                    Main.ShowMessage("Sie können nur in ihren eigenen Ländern Einheiten setzen.");
                 }
             }
         }
@@ -1185,6 +1415,7 @@ namespace Risiko
                 Field.countries[tempClickedScndIndex].unitsStationed = UnitsToMoveIfDefeated;
                 Field.countries[tempClickedFstIndex].unitsStationed -= UnitsToMoveIfDefeated;
                 tempClickedScndCountryColor = actualPlayer.playerColor;
+                ActualPlayer.AddOwnedCountry(Field.countries[tempClickedScndIndex]);
                 OrgAttackers = 0;
                 ResetClickedCountries(3);
                 return true;
@@ -1258,8 +1489,176 @@ namespace Risiko
             }
         }
 
+        // Move-Methoden
+        public void GetNeighboursArray()
+        {
+            int Neighbourhoods = 0;
+            int[,] tempNeighbours = new int[ActualPlayer.ownedCountries.Length, ActualPlayer.ownedCountries.Length];
+            for (int i = 0; i < ActualPlayer.ownedCountries.Length; ++i)
+            {
+                for (int j = 0; j < ActualPlayer.ownedCountries.Length; ++j)
+                    tempNeighbours[i, j] = -1;
+            }
 
-        
+            int[] OutBufAddUnits;
+            bool[] CountryUsed = new bool[ActualPlayer.ownedCountries.Length];
+            for (int i = 0; i < CountryUsed.Length; ++i)
+                CountryUsed[i] = false;
+
+
+            for (int i = 0; i < ActualPlayer.ownedCountries.Length; )
+            {
+                AddNeigbourHoodToOutBuff(ref tempNeighbours, i, ref CountryUsed, Neighbourhoods);
+                Neighbourhoods++;
+                i = GiveNextUnusedCountry(CountryUsed);
+                if (i == -1)
+                    break;
+            }
+
+            CreateRealOutBuffFromGetNeighboursArray(tempNeighbours);
+        }
+        /// <summary>
+        /// Generiert die relevanten Rückgaben von der Analyse
+        /// der "Nachbarschaften", verringert dabei Größe des Arrays
+        /// auf das nötigste
+        /// erzeugt einen Jagged-Array
+        /// </summary>
+        /// <param name="tempNeighbours"></param>
+        internal void CreateRealOutBuffFromGetNeighboursArray(int[,] tempNeighbours)
+        {
+            int NeighbourHoods = 0;
+            // Für OutBuff richtige Größe der ersten Dimension berechnen
+            for (int i = 0; i < tempNeighbours.GetLength(0); ++i)
+            {
+                if (tempNeighbours[i, 0] != -1)
+                    NeighbourHoods++;
+                else
+                    break;
+            }
+
+            int[][] OutBuff = new int[NeighbourHoods][];
+            // Einheiten die in Nachbarschaft frei sind mit richtiger Größe erzeugen
+            AddUnitsToNeighbourhood = new int[NeighbourHoods];
+            // initialisiert mit richtigem wert 0
+            for (int i = 0;i < AddUnitsToNeighbourhood.GetLength(0);++i)
+            {
+                AddUnitsToNeighbourhood[i] = 0;
+            }
+            // Für jede einzelne Nachbarschaft
+            for (int i = 0; i < OutBuff.GetLength(0); ++i)
+            {
+                // Anzahl der Länder in NeighbourHood auslesen
+                int CountriesInNeighbourHood = 0;
+                for (int j = 0; j < tempNeighbours.GetLength(1); ++j)
+                {
+                    if (tempNeighbours[i, j] != -1)
+                        CountriesInNeighbourHood++;
+                    else
+                        break;
+                }
+                // entsprechend der Anzahl der Länder Größe der zweiten Dimension von OutBuff erzeugen
+                OutBuff[i] = new int[CountriesInNeighbourHood];
+                for (int j = 0; j < CountriesInNeighbourHood; ++j)
+                {
+                    // OutBuff mit den Werten belegen
+                    OutBuff[i][j] = tempNeighbours[i, j];
+                }
+            }
+            // OutBuff abspeichern
+            NeighbouringCountriesFromActualPlayer = OutBuff;
+        }
+        /// <summary>
+        /// Liefert nächstes Land zurück, das noch
+        /// ohne "Nachbarschaft" ist
+        /// </summary>
+        /// <param name="CountryUsed"></param>
+        /// <returns></returns>
+        internal int GiveNextUnusedCountry(bool[] CountryUsed)
+        {
+            for (int i = 0; i < CountryUsed.Length; ++i)
+            {
+                if (CountryUsed[i] == false)
+                    return i;
+            }
+            return -1;
+        }
+        /// <summary>
+        /// Fügt Land mit IndexIn aus OwnedCountries
+        /// mit dessen gesamter "Nachbarschaft"
+        /// zu OutBuff in NeighbourHood Dimension hinzu
+        /// Rekursive Mehode um gesamte Nachbarschaft abzudecken
+        /// </summary>
+        /// <param name="OutBuff"></param>
+        /// <param name="IndexIn"></param>
+        /// <param name="CountryUsed"></param>
+        /// <param name="NeighbourHood"></param>
+        internal void AddNeigbourHoodToOutBuff(ref int[,] OutBuff, int IndexIn, ref bool[] CountryUsed, int NeighbourHood)
+        {
+            if (CountryUsed[IndexIn] == false)
+            {
+                CountryUsed[IndexIn] = true;
+                AddCountryToOutBuff(ref OutBuff, NeighbourHood, IndexIn);
+                for (int i = 0; i < ActualPlayer.ownedCountries[IndexIn].neighbouringCountries.Length; ++i)
+                {
+                    if (ActualPlayer.ownedCountries[IndexIn].neighbouringCountries[i].owner == ActualPlayer)
+                    {
+                        AddCountryToOutBuff(ref OutBuff, NeighbourHood, GetOwnedIndexFromName(ActualPlayer.ownedCountries[IndexIn].neighbouringCountries[i].name));
+                        AddNeigbourHoodToOutBuff(ref OutBuff, GetOwnedIndexFromName(ActualPlayer.ownedCountries[IndexIn].neighbouringCountries[i].name), ref CountryUsed, NeighbourHood);
+                    }
+                }
+            }
+        }
+        /// <summary>
+        /// Fügt IndexOfCountry in der NeighbourHood
+        /// Dimension in OutBuff ein
+        /// </summary>
+        /// <param name="OutBuff"></param>
+        /// <param name="NeighbourHood"></param>
+        /// <param name="IndexOfCountry"></param>
+        internal void AddCountryToOutBuff(ref int[,] OutBuff, int NeighbourHood, int IndexOfCountry)
+        {
+            for (int i = 0; i < ActualPlayer.ownedCountries.Length; ++i)//OutBuf.GetLength(NeighbourHood);++i)
+            {
+                if (OutBuff[NeighbourHood, i] == IndexOfCountry)
+                {
+                    return;
+                }
+                else if (OutBuff[NeighbourHood, i] == -1)
+                {
+                    OutBuff[NeighbourHood, i] = IndexOfCountry;
+                    return;
+                }
+            }
+        }
+        /// <summary>
+        /// Liefert den Index des Landes mit Namen NameIn
+        /// aus OwnedCountries von ActualPlayer zurück
+        /// </summary>
+        /// <param name="NameIn"></param>
+        /// <returns></returns>
+        internal int GetOwnedIndexFromName(string NameIn)
+        {
+            for (int i = 0; i < ActualPlayer.ownedCountries.Length; ++i)
+            {
+                if (ActualPlayer.ownedCountries[i].name == NameIn)
+                    return i;
+            }
+            return -1;
+        }
+        /// <summary>
+        /// Prüft ob in allen Nachbarschaften Einheiten gesetzt wurden
+        /// </summary>
+        /// <returns></returns>
+        internal bool CheckUnitsToSetLeft()
+        {
+            for (int i = 0;i < AddUnitsToNeighbourhood.Length;++i)
+            {
+                if (AddUnitsToNeighbourhood[i] != 0)
+                    return true;
+            }
+            return false;
+        }
+
         // Sonstiges
         /// <summary>
         /// Berechnet die Anzahl der Einheiten die ein Spieler am Anfang
@@ -1369,7 +1768,7 @@ namespace Risiko
                 Field.countries[i].colorOfCountry = Field.countries[i].owner.playerColor;
             }
 
-            // Besitz der Länder in ownedCountries der Spieler speichern, (2seitige Beziehung) TODO: unnötig?
+            // Besitz der Länder in ownedCountries der Spieler speichern, (2seitige Beziehung)
             for (int i = 0; i < Field.countries.Length; ++i)
             {
                 players[GetPlayerIndex(Field.countries[i].owner.name)].AddOwnedCountry(Field.countries[i]);
@@ -1473,6 +1872,32 @@ namespace Risiko
                 return Color.Orange;
             else
                 return Color.White;
+        }
+        /// <summary>
+        /// Wandelt Farbe in String um
+        /// </summary>
+        /// <param name="ColorIn"></param>
+        /// <returns></returns>
+        public string GetStringFromColor(Color ColorIn)
+        {
+            if (ColorIn == Color.Blue)
+                return "black";
+            else if (ColorIn == Color.Green)
+                return "green";
+            else if (ColorIn == Color.Yellow)
+                return "yellow";
+            else if (ColorIn == Color.Red)
+                return "red";
+            else if (ColorIn == Color.White)
+                return "white";
+            else if (ColorIn == Color.Black)
+                return "black";
+            else if (ColorIn == Color.Violet)
+                return "violet";
+            else if (ColorIn == Color.Orange)
+                return "orange";
+            else
+                return "green";
         }
         /// <summary>
         /// Liefert den Index des Landes zurück
@@ -1618,119 +2043,33 @@ namespace Risiko
             Area *= 3;
             return new Point((int)(MiddleX / Area), (int)(MiddleY / Area));
         }
-
-
-
-        // temp um ziehen zu können
-        public void GetNeighboursArray()
-        {
-            int Neighbourhoods = 0;
-            int actualNeighbourHood = 0;
-            int actualNeighbourHoodEntryCounter = 1;
-            int[,] OutBufNeighbours = new int[ActualPlayer.ownedCountries.Length, ActualPlayer.ownedCountries.Length];
-            for (int i = 0; i < ActualPlayer.ownedCountries.Length; ++i)
-            {
-                for (int j = 0; j < ActualPlayer.ownedCountries.Length; ++j)
-                    OutBufNeighbours[i, j] = -1;
-            }
-
-            int[] OutBufAddUnits;
-            bool[] CountrieUsed = new bool[ActualPlayer.ownedCountries.Length];
-            for (int i = 0; i < CountrieUsed.Length; ++i)
-                CountrieUsed[i] = false;
-
-            OutBufNeighbours[0, 0] = GetCountryIndexInOwnedCountriesFromName(actualPlayer.ownedCountries[0].name);
-            CountrieUsed[0] = true;
-
-
-
-            for (int i = 0; i < ActualPlayer.ownedCountries.Length; ++i)
-            {
-                if (CountrieUsed[i] == false)
-                {
-                    CountrieUsed[i] = true;
-                    actualNeighbourHood = ++Neighbourhoods;
-                    OutBufNeighbours[Neighbourhoods, 0] = i;
-                    actualNeighbourHoodEntryCounter = 1;
-                }
-                else
-                {
-                    int[] tempIn = GetNumberIndexOutOf2DArray(OutBufNeighbours, i);
-                    actualNeighbourHood = tempIn[0];
-                }
-                int IndexInAllCountries = ChangeIndexFromFromOwnedCountriesToAllCountries(i);
-                for (int j = 0; j < Field.countries[IndexInAllCountries].neighbouringCountries.Length; ++j)
-                {
-                    if (Field.GetCountryFromName(Field.countries[IndexInAllCountries].neighbouringCountries[j]).owner == ActualPlayer)
-                    {
-                        int index = GetCountryIndexInOwnedCountriesFromName(Field.countries[IndexInAllCountries].neighbouringCountries[j]);
-                        if (CountrieUsed[index] == false)
-                        {
-                            CountrieUsed[index] = true;
-                            OutBufNeighbours[actualNeighbourHood, actualNeighbourHoodEntryCounter++] = index;
-                        }
-                    }
-
-                }
-            }
-            int temp = OutBufNeighbours[0, 0];
-        }
-
-        internal void AddToOut(ref int[,] OutBuf, int IndexIn)
-        {
-            //Get
-        }
- 
-
-
-
-        internal int ChangeIndexFromFromOwnedCountriesToAllCountries(int indexIn)
-        {
-            string name = ActualPlayer.ownedCountries[indexIn].name;
-            for (int i = 0; i < Field.countries.Length; ++i)
-            {
-                if (Field.countries[i].name == name)
-                    return i;
-            }
-            return -1;
-        }
-
-        internal int[] GetNumberIndexOutOf2DArray(int[,] arrayIn, int numberIn)
-        {
-            int[] OutBuf = new int[2];
-            for (int i = 0; i < arrayIn.Length; ++i)
-            {
-                for (int j = 0; j < arrayIn.GetLength(i); ++j)
-                    if (arrayIn[i, j] == numberIn)
-                    {
-                        OutBuf[0] = i;
-                        OutBuf[1] = j;
-                        return OutBuf;
-                    }
-            }
-            return OutBuf;
-        }
         /// <summary>
-        /// Liefert den Index von Land mit Namen NameIn in ownedCountries
-        /// von ActualPlayer zurück, wenn nicht vorhanden -1
+        /// Liefert Position von NumberIn in ArrayIn
+        /// zurück, selbst als Array
+        /// OutBuff[0] erste Dimension
+        /// OutBuff[1] zweite Dimension
         /// </summary>
-        /// <param name="NameIn"></param>
+        /// <param name="ArrayIn"></param>
+        /// <param name="NumberIn"></param>
         /// <returns></returns>
-        internal int GetCountryIndexInOwnedCountriesFromName(string NameIn)
+        internal int[] GetNumberIndexOutOf2DArray(int[][] ArrayIn, int NumberIn)
         {
-            for (int i = 0; i < ActualPlayer.ownedCountries.Length; ++i)
+            int[] OutBuff = new int[2];
+            for (int i = 0; i < ArrayIn.Length; ++i)
             {
-                if (ActualPlayer.ownedCountries[i].name == NameIn)
-                    return i;
+                int[] tempArray = ArrayIn[i];
+                for (int j = 0;j < tempArray.Length;++j)
+                {
+                    if (ArrayIn[i][j] == NumberIn)
+                    {
+                        OutBuff[0] = i;
+                        OutBuff[1] = j;
+                        return OutBuff;
+                    }
+                }
             }
-            return -1;
+            return OutBuff;
         }
-
-
-
-
-
-
 
 
         // OLD
@@ -2023,6 +2362,41 @@ namespace Risiko
         //            DrawCountryFull(tempIndex);
         //        }
         //    }
+        //}
+        //internal int ChangeIndexFromFromOwnedCountriesToAllCountries(int indexIn)
+        //{
+        //    string name = ActualPlayer.ownedCountries[indexIn].name;
+        //    for (int i = 0; i < Field.countries.Length; ++i)
+        //    {
+        //        if (Field.countries[i].name == name)
+        //            return i;
+        //    }
+        //    return -1;
+        //}
+        //internal int ChangeIndexFromFromOwnedCountriesToAllCountries(int indexIn)
+        //{
+        //    string name = ActualPlayer.ownedCountries[indexIn].name;
+        //    for (int i = 0; i < Field.countries.Length; ++i)
+        //    {
+        //        if (Field.countries[i].name == name)
+        //            return i;
+        //    }
+        //    return -1;
+        //}
+        //internal int[] GetNumberIndexOutOf2DArray(int[,] arrayIn, int numberIn)
+        //{
+        //    int[] OutBuf = new int[2];
+        //    for (int i = 0; i < arrayIn.Length; ++i)
+        //    {
+        //        for (int j = 0; j < arrayIn.GetLength(i); ++j)
+        //            if (arrayIn[i, j] == numberIn)
+        //            {
+        //                OutBuf[0] = i;
+        //                OutBuf[1] = j;
+        //                return OutBuf;
+        //            }
+        //    }
+        //    return OutBuf;
         //}
     }
 }

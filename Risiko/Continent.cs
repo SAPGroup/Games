@@ -44,7 +44,7 @@ namespace Risiko
         /// <summary>
         /// Anzahl der beinhalteten Länder
         /// </summary>
-        private int NumberOfCountries;
+        internal int NumberOfCountries;
         public int numberOfCountries
         {
             get { return NumberOfCountries; }

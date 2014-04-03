@@ -199,7 +199,7 @@ namespace Risiko
         /// </summary>
         /// <param name="CountryNameIn"></param>
         /// <returns></returns>
-        public int GetCountryIndex(string CountryNameIn)
+        public int GetCountryIndexFromOwnedCountries(string CountryNameIn)
         {
             for (int i = 0;ownedCountries.Length > i;++i)
             {

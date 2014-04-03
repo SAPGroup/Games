@@ -37,7 +37,7 @@ namespace Risiko
         /// <summary>
         /// Array in dem die Nachbarländer gespeichert sind
         /// </summary>
-        internal string[] NeighbouringCountries;
+        internal Country[] NeighbouringCountries;
 
         /// <summary>
         /// Speichert den Kontinent, zu dem das Land gehört
@@ -75,7 +75,21 @@ namespace Risiko
         /// </summary>
         /// <param name="NameIn"></param>
         /// <param name="CornersIn"></param>
-        public Country(string NameIn, Point[] CornersIn, Color ColorIn, string[] NeighbouringCountriesIn, int ContinentIn)
+        public Country(string NameIn, Point[] CornersIn, Color ColorIn, Player OwnerIn, int UnitsIn)
+        {
+            Corners = CornersIn;
+            Name = NameIn;
+            ColorOfCountry = ColorIn;
+            Owner = OwnerIn;
+            UnitsStationed = UnitsIn;
+        }
+
+        /// <summary>
+        /// veränderterKonstruktor
+        /// </summary>
+        /// <param name="NameIn"></param>
+        /// <param name="CornersIn"></param>
+        public Country(string NameIn, Point[] CornersIn, Color ColorIn, Country[] NeighbouringCountriesIn, int ContinentIn)
         {
             Corners = CornersIn;
             Name = NameIn;
@@ -89,7 +103,7 @@ namespace Risiko
         /// </summary>
         /// <param name="NameIn"></param>
         /// <param name="CornersIn"></param>
-        public Country(string NameIn, Point[] CornersIn, Color ColorIn, string[] NeighbouringCountriesIn)
+        public Country(string NameIn, Point[] CornersIn, Color ColorIn, Country[] NeighbouringCountriesIn)
         {
             Corners = CornersIn;
             Name = NameIn;
@@ -168,7 +182,7 @@ namespace Risiko
         /// <summary>
         /// Set und Get der benachbarten Länder
         /// </summary>
-        public string[] neighbouringCountries
+        public Country[] neighbouringCountries
         {
             get { return NeighbouringCountries; }
             set { NeighbouringCountries = value; }

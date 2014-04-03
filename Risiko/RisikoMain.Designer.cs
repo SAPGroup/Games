@@ -38,8 +38,9 @@
             this.btnOptions = new System.Windows.Forms.Button();
             this.btnTest2 = new System.Windows.Forms.Button();
             this.pBUnits = new ExtendedDotNET.Controls.Progress.ProgressBar();
-            this.pnlMap = new Risiko.DoubleBufferedPanel();
             this.timerAttack = new System.Windows.Forms.Timer(this.components);
+            this.pnlMap = new Risiko.DoubleBufferedPanel();
+            this.spielSpeichernToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -58,6 +59,8 @@
             // 
             // dateiToolStripMenuItem
             // 
+            this.dateiToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.spielSpeichernToolStripMenuItem});
             this.dateiToolStripMenuItem.Name = "dateiToolStripMenuItem";
             this.dateiToolStripMenuItem.Size = new System.Drawing.Size(46, 20);
             this.dateiToolStripMenuItem.Text = "Datei";
@@ -122,7 +125,7 @@
             // 
             this.btnTest1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnTest1.BackColor = System.Drawing.Color.White;
-            this.btnTest1.Location = new System.Drawing.Point(519, 469);
+            this.btnTest1.Location = new System.Drawing.Point(519, 468);
             this.btnTest1.Name = "btnTest1";
             this.btnTest1.Size = new System.Drawing.Size(75, 23);
             this.btnTest1.TabIndex = 5;
@@ -198,6 +201,10 @@
             this.pBUnits.TextAntialias = true;
             this.pBUnits.Value = 100;
             // 
+            // timerAttack
+            // 
+            this.timerAttack.Interval = 1000;
+            // 
             // pnlMap
             // 
             this.pnlMap.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
@@ -213,9 +220,12 @@
             this.pnlMap.MouseMove += new System.Windows.Forms.MouseEventHandler(this.pnlMap_MouseMove);
             this.pnlMap.Resize += new System.EventHandler(this.ResizeMap);
             // 
-            // timerAttack
+            // spielSpeichernToolStripMenuItem
             // 
-            this.timerAttack.Interval = 1000;
+            this.spielSpeichernToolStripMenuItem.Name = "spielSpeichernToolStripMenuItem";
+            this.spielSpeichernToolStripMenuItem.Size = new System.Drawing.Size(153, 22);
+            this.spielSpeichernToolStripMenuItem.Text = "Spiel speichern";
+            this.spielSpeichernToolStripMenuItem.Click += new System.EventHandler(this.spielSpeichernToolStripMenuItem_Click);
             // 
             // RisikoMain
             // 
@@ -262,6 +272,7 @@
         private System.ComponentModel.IContainer components;
         internal ExtendedDotNET.Controls.Progress.ProgressBar pBUnits;
         private System.Windows.Forms.Timer timerAttack;
+        private System.Windows.Forms.ToolStripMenuItem spielSpeichernToolStripMenuItem;
     }
 }
 
