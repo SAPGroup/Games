@@ -437,12 +437,11 @@ namespace Risiko
             SpreadCountriesToPlayers();
             // Karte mit neuen Länderfarben zeichnen
             DrawMap();
-            DrawFullMap();
             // Gamestate festlegen
             GameState = 0;
             // UnitsToAdd-Array erstellen
             UnitsToAdd = new int[Field.countries.Length];
-            // Zeigt an das das Einheiten-Setzen begonnen hat
+            // Zeigt an dass das Einheiten-Setzen begonnen hat
             StartUnitAdding = true;
             // ActualPlayer festlegen
             ActualPlayer = Players[0];
@@ -455,6 +454,7 @@ namespace Risiko
 
             Main.pBUnits.Maximum = actualPlayer.unitsPT;
             Main.pBUnits.Value = actualPlayer.unitsPT;
+            DrawFullMap();
         }
         public void LoadGame()
         {
@@ -471,6 +471,8 @@ namespace Risiko
 
             // ein Gamestate weiter machen
             nextGameState();
+            if (GameState == 3 | GameState == 2)
+                Main.pBUnits.Visible = false;
             // Karte zeichnen
             DrawMap();
             DrawFullMap();
@@ -1816,20 +1818,14 @@ namespace Risiko
 
             int[] CountriesOfContsOfPlayer = new int[Field.continents.Length];
             for (int i = 0; i < CountriesOfContsOfPlayer.Length; ++i)
-            {
                 CountriesOfContsOfPlayer[i] = 0;
-            }
 
             for (int i = 0; i < ActualPlayer.ownedCountries.Length; ++i)
-            {
                 CountriesOfContsOfPlayer[ActualPlayer.ownedCountries[i].continent]++;
-            }
 
             for (int i = 0; i < Field.continents.Length; ++i)
-            {
                 if (Field.continents[i].numberOfCountries == CountriesOfContsOfPlayer[i])
                     OutBuff += Field.continents[i].AdditionalUnits;
-            }
 
             return OutBuff;
         }

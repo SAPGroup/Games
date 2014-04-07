@@ -27,6 +27,7 @@
             this.components = new System.ComponentModel.Container();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.dateiToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.spielSpeichernToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.bearbeitenToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.einstellungenToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.einstellungenToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
@@ -40,7 +41,6 @@
             this.pBUnits = new ExtendedDotNET.Controls.Progress.ProgressBar();
             this.timerAttack = new System.Windows.Forms.Timer(this.components);
             this.pnlMap = new Risiko.DoubleBufferedPanel();
-            this.spielSpeichernToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -64,6 +64,13 @@
             this.dateiToolStripMenuItem.Name = "dateiToolStripMenuItem";
             this.dateiToolStripMenuItem.Size = new System.Drawing.Size(46, 20);
             this.dateiToolStripMenuItem.Text = "Datei";
+            // 
+            // spielSpeichernToolStripMenuItem
+            // 
+            this.spielSpeichernToolStripMenuItem.Name = "spielSpeichernToolStripMenuItem";
+            this.spielSpeichernToolStripMenuItem.Size = new System.Drawing.Size(153, 22);
+            this.spielSpeichernToolStripMenuItem.Text = "Spiel speichern";
+            this.spielSpeichernToolStripMenuItem.Click += new System.EventHandler(this.spielSpeichernToolStripMenuItem_Click);
             // 
             // bearbeitenToolStripMenuItem
             // 
@@ -219,13 +226,6 @@
             this.pnlMap.MouseClick += new System.Windows.Forms.MouseEventHandler(this.pnlMap_MouseClick);
             this.pnlMap.MouseMove += new System.Windows.Forms.MouseEventHandler(this.pnlMap_MouseMove);
             this.pnlMap.Resize += new System.EventHandler(this.ResizeMap);
-            // 
-            // spielSpeichernToolStripMenuItem
-            // 
-            this.spielSpeichernToolStripMenuItem.Name = "spielSpeichernToolStripMenuItem";
-            this.spielSpeichernToolStripMenuItem.Size = new System.Drawing.Size(153, 22);
-            this.spielSpeichernToolStripMenuItem.Text = "Spiel speichern";
-            this.spielSpeichernToolStripMenuItem.Click += new System.EventHandler(this.spielSpeichernToolStripMenuItem_Click);
             // 
             // RisikoMain
             // 

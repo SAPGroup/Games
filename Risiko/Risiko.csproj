@@ -74,6 +74,7 @@
     <Compile Include="AI.cs" />
     <Compile Include="AIContinent.cs" />
     <Compile Include="AICountry.cs" />
+    <Compile Include="AIPlayer.cs" />
     <Compile Include="Continent.cs" />
     <Compile Include="Country.cs" />
     <Compile Include="DoubleBufferedPanel.cs">

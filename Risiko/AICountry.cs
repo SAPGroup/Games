@@ -6,14 +6,18 @@ using System.Threading.Tasks;
 
 namespace Risiko
 {
-    class AICountry:Country
+    class AICountry
     {
-        // properties
-        // scceeded
-        // name, owner, unitsstationed, neighbouringcountries, continent
+        // Land selbst
+        internal Country ThisCountry;
+        //AI - Properties
+        // For Evolutionary Algorithm
+        internal double blub;
 
+        //Calculated
         /// <summary>
-        /// Bei eigenen Ländern, wie stark verteidigt werden soll
+        /// Prozentsatz, wenn zu groß verstärkt Einheiten einsetzen
+        /// Relation zwischen potentiellen Angreifern gegen Land und pot Angreifern insgesamtgungswert
         /// </summary>
         internal double DefendValue = 0.0;
         /// <summary>
@@ -24,11 +28,7 @@ namespace Risiko
         // Constructor
         public AICountry(Country CountryIn)
         {
-            Name = CountryIn.name;
-            Owner = CountryIn.owner;
-            UnitsStationed = CountryIn.unitsStationed;
-            NeighbouringCountries = CountryIn.neighbouringCountries;
-            Continent = CountryIn.continent;
+            ThisCountry = CountryIn;
         }
 
         // normal constructor
@@ -44,12 +44,7 @@ namespace Risiko
         /// <param name="CountryIn"></param>
         public void ActualizeWithNormalCountry(Country CountryIn)
         {
-            Name = CountryIn.name;
-            Owner = CountryIn.owner;
-            UnitsStationed = CountryIn.unitsStationed;
-            NeighbouringCountries = CountryIn.neighbouringCountries;
-            Continent = CountryIn.continent;
+            ThisCountry = CountryIn;
         }
-        
     }
 }

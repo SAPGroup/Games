@@ -6,18 +6,17 @@ using System.Threading.Tasks;
 
 namespace Risiko
 {
-    class AIContinent:Continent
+    class AIContinent
     {
-        //Properties
-        //succeeded
-        //nameofcontinent, numberofcountries, additionalunits
-        internal double Effectiveness;
+        internal Continent ThisContinent;
 
+        //AIContinent values
+        internal double Effectiveness;
+        
+        //use this
         public AIContinent(Continent ContIn)
         {
-            NameOfContinent = ContIn.nameOfContinent;
-            NumberOfCountries = ContIn.numberOfCountries;
-            AdditionalUnits = ContIn.additionalUnits;
+            ThisContinent = ContIn;
         }
 
         //normal constructor
