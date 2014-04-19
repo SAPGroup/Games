@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Drawing;
 using System.Windows;
-using Games;
+using Launcher;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Risiko; 
 

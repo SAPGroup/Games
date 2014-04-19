@@ -59,10 +59,6 @@
       <Project>{d0edc055-e4d8-4ec7-9627-930274b90dfb}</Project>
       <Name>Risiko</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Games.csproj">
-      <Project>{9b223408-f5d3-4b7b-9bef-27b3225ba810}</Project>
-      <Name>Games</Name>
-    </ProjectReference>
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

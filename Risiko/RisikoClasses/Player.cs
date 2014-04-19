@@ -193,6 +193,15 @@ namespace Risiko
             }
         }
 
+        public void TakeOwnedCountry(Country CountryIn)
+        {
+            Country[] OutBuff = new Country[OwnedCountries.Length-1];
+            for (int i = 0, Counter = 0;i < OwnedCountries.Length;++i)
+                if (OwnedCountries[i] != CountryIn) 
+                    OutBuff[Counter++] = OwnedCountries[i];
+
+            OwnedCountries = OutBuff;
+        }
 
         /// <summary>
         /// Liefert Index des Landes mit Name CountryNameIn

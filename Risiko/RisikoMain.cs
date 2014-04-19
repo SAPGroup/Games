@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -45,18 +46,18 @@ namespace Risiko
         // um Locations zu speichern
         Point[] ControlLocations = new Point[7];
 
+        //Konstruktoren
         public RisikoMain()
         {
             InitializeComponent();
         }
-
         public RisikoMain(int ModeIn, string Info)
         {
             Mode = ModeIn;
             tempInfo = Info;
             InitializeComponent();
         }
-
+        //Load-Methode
         internal void RisikoMain_Load(object sender, EventArgs e)
         {
             // Rücksetzen des Nachrichtenlabels
@@ -101,26 +102,16 @@ namespace Risiko
             }
         }
 
-
-        // KlickEreignisse
-        internal void btnDrawMap_Click(object sender, EventArgs e)
+        // Menüband
+        /// <summary>
+        /// Menüband, Klick auf Speichern
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void spielSpeichernToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Control.DrawMap();
+            Control.SaveGame();
         }
-
-        private void btnEndMove_Click(object sender, EventArgs e)
-        {
-            SaveControlLocations();
-            Control.ButtonMoveAttackSetEnd();
-            LoadControlLocations();
-        }
-
-        internal void btnOptions_Click(object sender, EventArgs e)
-        {
-            RisikoAttackOptions Opt = new RisikoAttackOptions(this);
-            Opt.Show();
-        }
-
         internal void einstellungenToolStripMenuItem1_Click(object sender, EventArgs e)
         {
             if (Control.autoLanderkennung)
@@ -129,6 +120,23 @@ namespace Risiko
                 Control.autoLanderkennung = true;
         }
 
+        // KlickEreignisse
+        internal void btnDrawMap_Click(object sender, EventArgs e)
+        {
+            Control.DrawMap();
+        }
+        private void btnEndMove_Click(object sender, EventArgs e)
+        {
+            SaveControlLocations();
+            Control.ButtonMoveAttackSetEnd();
+            LoadControlLocations();
+        }
+        internal void btnOptions_Click(object sender, EventArgs e)
+        {
+            RisikoAttackOptions Opt = new RisikoAttackOptions(this);
+            Opt.Show();
+        }
+        
         //          !!!         Maussteuerung       !!!
         /// <summary>
         /// Bei Mausbewegung
@@ -139,7 +147,6 @@ namespace Risiko
         {
             Control.MouseMoved(e);
         }
-
         internal void pnlMap_MouseClick(object sender, MouseEventArgs e)
         {
             SaveControlLocations();
@@ -148,6 +155,15 @@ namespace Risiko
         }
 
 
+        // Für Einstellungs-Popup
+        /// <summary>
+        /// Liefert Position des Popups in Relation zum Button
+        /// </summary>
+        /// <returns></returns>
+        public Point GivePopUpPos()
+        {
+            return new Point(Location.X + btnOptions.Location.X + 8, Location.Y + btnOptions.Location.Y + 29);
+        }
         private void btnOptions_MouseEnter(object sender, EventArgs e)
         {
             RisikoAttackOptions Opt = new RisikoAttackOptions(this);
@@ -185,7 +201,6 @@ namespace Risiko
             // Karte festlegen
             pnlMap.BackgroundImage = z_asBitmap;
         }
-
         /// <summary>
         /// zeichnet auf pnl mithilfe der Standard GDI+
         /// allerdings nur ein Land, womit zu viel zeichnen vermieden wird
@@ -211,7 +226,6 @@ namespace Risiko
             temp.FillPolygon(tempObjectbrush, realPoints);
             temp.DrawPolygon(stift, realPoints);
         }
-
         /// <summary>
         /// Zeichnet Land mit Index IndexIn markiert
         /// </summary>
@@ -235,7 +249,6 @@ namespace Risiko
             temp.FillPolygon(tempObjectbrush, realPoints);
             temp.DrawPolygon(stift, realPoints);
         }
-
         /// <summary>
         /// Kreis in der Mitte eine Landes (CountryIn)
         /// wird gezeichnet, mit der Anzahl der Einheiten
@@ -261,7 +274,6 @@ namespace Risiko
             temp.DrawString(
                 Convert.ToString(Control.field.countries[Country].unitsStationed), f, tempObjectbrush, Middle.X - 5, Middle.Y - 5);
         }
-
         /// <summary>
         /// Zeichnet nur Anzahl der Einheiten, in Weiß in der Mitte des Landes
         /// </summary>
@@ -277,7 +289,7 @@ namespace Risiko
             //zum schreiben
             Font f = new Font("Arial", 10);
             SolidBrush tempObjectbrush = new SolidBrush(Color.Black);
-
+          
             // -5 magic, TODO: Verbessern, passt nicht immer (nicht immer in der Mitte -> zweistellig usw.)
             temp.DrawString(
                 Convert.ToString(Control.field.countries[Country].unitsStationed), f, tempObjectbrush, Middle.X - 5, Middle.Y - 5);
@@ -289,7 +301,6 @@ namespace Risiko
                 "+" + Convert.ToString(Control.unitsToAdd[Country]), f, tempObjectbrush, Middle.X + 10, Middle.Y - 5);
             }
         }
-
         /// <summary>
         /// Zeichnet Land mit Farbigem äußeren, gründ atm
         /// </summary>
@@ -333,7 +344,10 @@ namespace Risiko
             temp.FillPolygon(tempObjectbrush, InnerPoly);
 
         }
-
+        /// <summary>
+        /// Schreibt die Koordinaten der Eckpunkte der Länder an die Eckpunkte der Länder
+        /// </summary>
+        /// <param name="CountryIn"></param>
         public void DrawCorners(int CountryIn)
         {
             Point[] realPoints = Control.GetRealPointsFromCorners(Control.field.countries[CountryIn].corners);
@@ -353,7 +367,6 @@ namespace Risiko
                 temp.DrawString(Corner, f, tempObjectbrush, realPoints[i].X, realPoints[i].Y);
             }
         }
-
         /// <summary>
         /// TEMP:
         /// Zeichnet Nachbarländer (zeichnet das Netzwerk an Nachbarländern) 
@@ -388,9 +401,6 @@ namespace Risiko
                     Convert.ToString(Control.GetOwnedIndexFromName(Control.field.countries[i].name)) + Control.field.countries[i].name, f, tempObjectbrush, Middle.X + 10, Middle.Y + 5);
             }
         }
-
-
-
         /// <summary>
         /// Liefert Höhe und Breite von pnlMap,
         /// </summary>
@@ -402,15 +412,14 @@ namespace Risiko
             data[1] = pnlMap.Height;
             return data;
         }
-
+        /// <summary>
+        /// Zeichnet Karte Neu bei veränderung der Größe der Map
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         internal void ResizeMap(object sender, EventArgs e)
         {
             Control.DrawMap();
-        }
-
-        public void ManualRelocate()
-        {
-            
         }
 
 
@@ -463,29 +472,35 @@ namespace Risiko
 
 
         // Sonstiges
-        public Point GivePopUpPos()
-        {
-            return new Point(Location.X + btnOptions.Location.X + 8, Location.Y + btnOptions.Location.Y + 29);
-        }
-
+        /// <summary>
+        /// Setzt Texteigenschaft von lblMessage auf Message
+        /// </summary>
+        /// <param name="Message"></param>
         public void ShowMessage(string Message)
         {
             lblMessage.Text = Message;
             timerDeleteMessage.Start();
         }
-
+        /// <summary>
+        /// Löscht Meldung aus lblMessage
+        /// </summary>
         public void DeleteMessage()
         {
             lblMessage.Text = "";
         }
-
+        /// <summary>
+        /// Tick des Timers, Tickt jeweils nur einmal
+        /// deaktiviert sich selbst und löscht lblMessage.Text
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         internal void timerDeleteMessage_Tick(object sender, EventArgs e)
         {
             lblMessage.Text = "";
             timerDeleteMessage.Stop();
         }
-
         /// <summary>
+        /// Löscht die KontinentLabels
         /// Eigentlich nicht benötigt
         /// </summary>
         public void RemoveContinentsLabels()
@@ -495,25 +510,6 @@ namespace Risiko
                 Controls.Remove(lblContinents[i]);
             }
         }
-
-        private void btnTest2_Click(object sender, EventArgs e)
-        {
-            //Refresh();
-            //Application.DoEvents();
-            DrawAllNeighbours();
-            //Control.GetNeighboursArray();
-        }
-
-        internal void btnTest_Click(object sender, EventArgs e)
-        {
-            // neues Spiel
-            string[] name = { "Peter", "Hans" };
-            Color[] color = { Color.FromArgb(0xEE, 0x2C, 0x2C), Color.FromArgb(0x54, 0x8B, 0x54) };
-            Color[] color2 = { Color.Red, Color.Green };
-            bool[] ai = { false, false };
-            Control.StartNewGame(name, color2, ai);
-        }
-
         /// <summary>
         /// Aktualisiert Progressbar
         /// </summary>
@@ -521,7 +517,9 @@ namespace Risiko
         {
             pBUnits.Value = Control.actualPlayer.unitsPT;
         }
-
+        /// <summary>
+        /// Speichert die Position alles Controls
+        /// </summary>
         public void SaveControlLocations()
         {
             ControlLocations[0] = lblMessage.Location;
@@ -532,7 +530,9 @@ namespace Risiko
             ControlLocations[5] = btnTest1.Location;
             ControlLocations[6] = btnTest2.Location;
         }
-
+        /// <summary>
+        /// Stellt die gespeicherte Position aller Controls wieder her
+        /// </summary>
         public void LoadControlLocations()
         {
             lblMessage.Location = ControlLocations[0];
@@ -543,26 +543,47 @@ namespace Risiko
             btnTest1.Location = ControlLocations[5];
             btnTest2.Location = ControlLocations[6];
         }
-
-
+        /// <summary>
+        /// Kehr Sichtbarkeit der Progressbar um
+        /// </summary>
         public void NegateVisibilityPB()
         {
             pBUnits.Visible = !pBUnits.Visible;
         }
-
+        /// <summary>
+        /// Setzt die Progressbar.Color auf ColorIn
+        /// </summary>
+        /// <param name="ColorIn"></param>
         public void SetPBColor(Color ColorIn)
         {
             pBUnits.MainColor = ColorIn;
         }
-
+        /// <summary>
+        /// Aktualisiert den Maximalen Wert der Progressbar
+        /// </summary>
         public void ActualizePBmax()
         {
             pBUnits.Maximum = Control.actualPlayer.unitsPT;
         }
 
-        private void spielSpeichernToolStripMenuItem_Click(object sender, EventArgs e)
+        // TestMethoden für TestButtons
+        private void btnTest2_Click(object sender, EventArgs e)
         {
-            Control.SaveGame();
+            DrawAllNeighbours();
+        }
+        internal void btnTest_Click(object sender, EventArgs e)
+        {
+            // neues Spiel
+            string[] name = { "Peter", "Hans" };
+            Color[] color = { Color.FromArgb(0xEE, 0x2C, 0x2C), Color.FromArgb(0x54, 0x8B, 0x54) };
+            Color[] color2 = { Color.Red, Color.Green };
+            bool[] ai = { false, false };
+            Control.StartNewGame(name, color2, ai);
+        }
+
+        private void pnlMap_Paint(object sender, PaintEventArgs e)
+        {
+
         }
 
         //Old

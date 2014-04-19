@@ -110,9 +110,9 @@
             // 
             this.btnEndMoveAttack.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnEndMoveAttack.BackColor = System.Drawing.Color.White;
-            this.btnEndMoveAttack.Location = new System.Drawing.Point(519, 405);
+            this.btnEndMoveAttack.Location = new System.Drawing.Point(495, 405);
             this.btnEndMoveAttack.Name = "btnEndMoveAttack";
-            this.btnEndMoveAttack.Size = new System.Drawing.Size(75, 23);
+            this.btnEndMoveAttack.Size = new System.Drawing.Size(99, 23);
             this.btnEndMoveAttack.TabIndex = 3;
             this.btnEndMoveAttack.Text = "Zug beenden";
             this.btnEndMoveAttack.UseVisualStyleBackColor = false;
@@ -151,7 +151,7 @@
             this.btnOptions.BackColor = System.Drawing.Color.White;
             this.btnOptions.BackgroundImage = global::Risiko.Properties.Resources.DoppelpfeilGrossSchwarz;
             this.btnOptions.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            this.btnOptions.Location = new System.Drawing.Point(485, 405);
+            this.btnOptions.Location = new System.Drawing.Point(461, 405);
             this.btnOptions.Name = "btnOptions";
             this.btnOptions.Size = new System.Drawing.Size(28, 23);
             this.btnOptions.TabIndex = 7;
@@ -191,7 +191,7 @@
             this.pBUnits.FloodStyle = ExtendedDotNET.Controls.Progress.ProgressFloodStyle.Horizontal;
             this.pBUnits.ForeColor = System.Drawing.Color.Yellow;
             this.pBUnits.Invert = false;
-            this.pBUnits.Location = new System.Drawing.Point(305, 404);
+            this.pBUnits.Location = new System.Drawing.Point(281, 405);
             this.pBUnits.MainColor = System.Drawing.Color.Red;
             this.pBUnits.Maximum = 100;
             this.pBUnits.Minimum = 0;
@@ -223,6 +223,7 @@
             this.pnlMap.Name = "pnlMap";
             this.pnlMap.Size = new System.Drawing.Size(582, 372);
             this.pnlMap.TabIndex = 1;
+            this.pnlMap.Paint += new System.Windows.Forms.PaintEventHandler(this.pnlMap_Paint);
             this.pnlMap.MouseClick += new System.Windows.Forms.MouseEventHandler(this.pnlMap_MouseClick);
             this.pnlMap.MouseMove += new System.Windows.Forms.MouseEventHandler(this.pnlMap_MouseMove);
             this.pnlMap.Resize += new System.EventHandler(this.ResizeMap);

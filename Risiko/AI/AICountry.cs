@@ -11,13 +11,12 @@ namespace Risiko
         // Land selbst
         internal Country ThisCountry;
         //AI - Properties
-        // For Evolutionary Algorithm
-        internal double blub;
+        
 
         //Calculated
         /// <summary>
         /// Prozentsatz, wenn zu groß verstärkt Einheiten einsetzen
-        /// Relation zwischen potentiellen Angreifern gegen Land und pot Angreifern insgesamtgungswert
+        /// Relation zwischen Einheiten in Land und potentiell angreifenden Einheiten
         /// </summary>
         internal double DefendValue = 0.0;
         /// <summary>
@@ -25,18 +24,31 @@ namespace Risiko
         ///  Drang anzugreifen ist
         /// </summary>
         internal double AttackValue = 0.0;
+        /// <summary>
+        /// Wert ob Land feindliche Nachbarländer hat
+        /// false = keine feindlichen Nachbarländer
+        /// true = schon
+        /// </summary>
+        internal bool IsBorderCountryForPlayer = false;
+        /// <summary>
+        /// Legt Wichtigkeit des Landes für Verteidigung fest
+        /// falls keine Nachbarländer = 0.0
+        /// </summary>
+        internal double DefenceImportance = 0.0;
+
+
         // Constructor
         public AICountry(Country CountryIn)
         {
             ThisCountry = CountryIn;
         }
-
         // normal constructor
         public AICountry()
         {
             
         }
 
+        //Sonstiges
         /// <summary>
         /// Setzt erneut die geerbten Werte auf die von CountryIn
         /// zum Aktualisieren nötig

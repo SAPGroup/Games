@@ -71,18 +71,20 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AI.cs" />
-    <Compile Include="AIContinent.cs" />
-    <Compile Include="AICountry.cs" />
-    <Compile Include="AIPlayer.cs" />
-    <Compile Include="Continent.cs" />
-    <Compile Include="Country.cs" />
+    <Compile Include="AI\AI.cs" />
+    <Compile Include="AI\AIContinent.cs" />
+    <Compile Include="AI\AICountry.cs" />
+    <Compile Include="AI\AIPlayer.cs" />
+    <Compile Include="AI\EA.cs" />
+    <Compile Include="AI\Plan.cs" />
+    <Compile Include="RisikoClasses\Continent.cs" />
+    <Compile Include="RisikoClasses\Country.cs" />
     <Compile Include="DoubleBufferedPanel.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="GameControl.cs" />
-    <Compile Include="GameField.cs" />
-    <Compile Include="Player.cs" />
+    <Compile Include="RisikoClasses\GameControl.cs" />
+    <Compile Include="RisikoClasses\GameField.cs" />
+    <Compile Include="RisikoClasses\Player.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

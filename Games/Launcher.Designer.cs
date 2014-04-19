@@ -41,6 +41,7 @@
             this.PlayerIsAi = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.btnNewGame = new System.Windows.Forms.Button();
             this.btnLoadGame = new System.Windows.Forms.Button();
+            this.btnTest = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.pBGame1)).BeginInit();
             this.menuStripMain.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dGVNewGame)).BeginInit();
@@ -158,12 +159,23 @@
             this.btnLoadGame.UseVisualStyleBackColor = false;
             this.btnLoadGame.Click += new System.EventHandler(this.btnLoadGame_Click);
             // 
+            // btnTest
+            // 
+            this.btnTest.Location = new System.Drawing.Point(183, 306);
+            this.btnTest.Name = "btnTest";
+            this.btnTest.Size = new System.Drawing.Size(75, 23);
+            this.btnTest.TabIndex = 7;
+            this.btnTest.Text = "button1";
+            this.btnTest.UseVisualStyleBackColor = true;
+            this.btnTest.Click += new System.EventHandler(this.button1_Click);
+            // 
             // Launcher
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
             this.ClientSize = new System.Drawing.Size(427, 338);
+            this.Controls.Add(this.btnTest);
             this.Controls.Add(this.dGVNewGame);
             this.Controls.Add(this.btnLoadGame);
             this.Controls.Add(this.btnNewGame);
@@ -195,6 +207,7 @@
         internal System.Windows.Forms.DataGridViewTextBoxColumn PlayerName;
         internal System.Windows.Forms.DataGridViewComboBoxColumn PlayerColor;
         internal System.Windows.Forms.DataGridViewCheckBoxColumn PlayerIsAi;
+        private System.Windows.Forms.Button btnTest;
     }
 }
 

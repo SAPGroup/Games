@@ -5,6 +5,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -368,6 +369,7 @@ namespace Risiko
                         if (CheckOwnerShipNew(Attackers))
                             break;
                     }
+                    ResetClickedCountries(3);
                 }
             }
             // 3er-AttackModus
@@ -386,8 +388,6 @@ namespace Risiko
                     DrawCountryFull(tempClickedScndIndex);
                 }
 
-                //DrawCountryFull(tempClickedFstIndex);
-                //DrawCountryFull(tempClickedScndIndex);
             }
             // Custom Unit-Mode
             else if (ActualPlayer.settingAttack > 0)
@@ -1203,6 +1203,7 @@ namespace Risiko
                     DrawCountryFull(fst);
                 }
             }
+            Main.btnEndMoveAttack.Text = "Zug beenden";
         }
         /// <summary>
         /// bei Gamestate = 2, AngriffsModus, 2 Länder auswählbar
@@ -1257,6 +1258,8 @@ namespace Risiko
                             Field.countries[tempClickedScndIndex].colorOfCountry = ColorCountrySelected;
                             // zeichnen
                             DrawCountryFull(tempClickedScndIndex);
+                            // Text von Button ändern
+                            Main.btnEndMoveAttack.Text = "Angreifen";
                         }
                         // zwar gegnerisches Land, jedoch kein Nachbar
                         else
@@ -1413,6 +1416,7 @@ namespace Risiko
         {
             if (Field.countries[tempClickedScndIndex].unitsStationed == 0)
             {
+                Field.countries[tempClickedScndIndex].owner.TakeOwnedCountry(Field.countries[tempClickedScndIndex]);
                 Field.countries[tempClickedScndIndex].owner = ActualPlayer;
                 Field.countries[tempClickedScndIndex].unitsStationed = UnitsToMoveIfDefeated;
                 Field.countries[tempClickedFstIndex].unitsStationed -= UnitsToMoveIfDefeated;
@@ -1502,7 +1506,6 @@ namespace Risiko
                     tempNeighbours[i, j] = -1;
             }
 
-            int[] OutBufAddUnits;
             bool[] CountryUsed = new bool[ActualPlayer.ownedCountries.Length];
             for (int i = 0; i < CountryUsed.Length; ++i)
                 CountryUsed[i] = false;
@@ -2067,6 +2070,24 @@ namespace Risiko
             return OutBuff;
         }
 
+
+
+        // Not Used
+        public void SerializeThis(string SaveLocation)
+        {
+            BinaryFormatter bf = new BinaryFormatter();
+            fs = new FileStream(SaveLocation, FileMode.Create);
+
+            bf.Serialize(fs, this);
+            fs.Close();
+        }
+        public void DeserializeThis()
+        {
+            BinaryFormatter bf = new BinaryFormatter();
+            fs = new FileStream(TxtDataSource, FileMode.Open);
+            //this = (GameControl) bf.Deserialize(fs);
+            fs.Close();
+        }
 
         // OLD
         ///// <summary>
